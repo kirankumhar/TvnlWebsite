@@ -9,16 +9,8 @@ class AlbumController
     {
         // Extract the year and month from the event date
         $year = date('Y', strtotime($event_date));
-        $month = date('m', strtotime($event_date));
-
-        // Check if the month is before or after April
-        if ($month >= 4) {
-            // If the month is April or later, the session year is the current year to the next year
-            return $year . '-' . ($year + 1);
-        } else {
-            // If the month is before April, the session year is the previous year to the current year
-            return ($year - 1) . '-' . $year;
-        }
+        return $year;
+        
     }
 
     public function insertAlbum()
