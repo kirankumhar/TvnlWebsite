@@ -1,0 +1,6 @@
+[26-Feb-2025 08:40:20 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active (started from /var/www/vhosts/gpsimdega.ac.in/httpdocs/cdgps/src/controllers/gallery/album_api.php on line 2) in /var/www/vhosts/gpsimdega.ac.in/httpdocs/cdgps/src/controllers/gallery/AlbumController.php on line 11
+[26-Feb-2025 08:40:20 UTC] PHP Fatal error:  Uncaught Error: Class "AlbumController" not found in /var/www/vhosts/gpsimdega.ac.in/httpdocs/cdgps/src/controllers/gallery/AlbumController.php:18
+Stack trace:
+#0 /var/www/vhosts/gpsimdega.ac.in/httpdocs/cdgps/src/controllers/gallery/album_api.php(11): require_once()
+#1 {main}
+  thrown in /var/www/vhosts/gpsimdega.ac.in/httpdocs/cdgps/src/controllers/gallery/AlbumController.php on line 18

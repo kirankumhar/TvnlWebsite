@@ -1,0 +1,23 @@
+<?php
+
+class LogoutController {
+    public function logout() {
+        // Start the session if it hasn't been started already
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+
+        session_unset();
+
+        session_destroy();
+
+        header('Location: /');
+        exit;
+    }
+}
+
+// Instantiate the controller and call the logout method
+$controller = new LogoutController();
+$controller->logout();
+
+?>

@@ -1,0 +1,86 @@
+<?php
+session_start();
+include('./timeout.php');
+
+if (!isset($_SESSION['user_id'])) {
+    $_SESSION['login_error'] = 'Session Timeout, Please Login Again.';
+    header('Location: index.php');
+    exit;
+}
+require_once __DIR__ . '/layouts/header.php';
+if (isset($_SESSION['user_id'])) {
+    $title = "Admin - Add Category";
+    $catId = isset($_GET['id']) ? intval($_GET['id']) : 0;
+
+    $sql = $pdo->prepare("SELECT * FROM category_master WHERE id= :catId #is_deleted = '0'");
+
+    $sql->bindParam(':catId', $catId, PDO::PARAM_INT);
+
+    $sql->execute();
+    $data = $sql->fetch(PDO::FETCH_ASSOC);
+
+?>
+
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="col-md-12">
+                    <div class="card-header-modern d-flex align-items-center justify-content-between">
+                        Edit Category
+                        <a href="javascript:history.back()" class="btn btn-danger btn-sm">
+                            ← Back
+                        </a>
+                    </div>
+
+                    <div class="p-2">
+                        <!-- rest form / content -->
+                    </div>
+
+                    <?php if (isset($_SESSION['message'])) { ?>
+                        <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                            <strong>Success!</strong> <?php echo $_SESSION['message']; ?>.
+                            <button type="button"
+                                class="btn btn-sm btn-primary ml-3"
+                                aria-label="Close"
+                                onclick="closeAlert(this)">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                            <?php unset($_SESSION['message']); ?>
+                        </div>
+                    <?php } elseif (isset($_SESSION['error'])) { ?>
+                        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                            <?php echo $_SESSION['error']; ?>.
+                            <button type="button"
+                                class="btn btn-sm btn-primary ml-3"
+                                aria-label="Close"
+                                onclick="closeAlert(this)">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                            <?php unset($_SESSION['error']); ?>
+                        </div>
+                    <?php } ?>
+
+                    <form action="<?= $base_url ?>/src/controllers/CategoryController.php" method="post" enctype='multipart/form-data'>
+                        <input type="hidden" name="uid" value="<?= $data['id'] ?>">
+                        <input type="hidden" name="action" value="updateCategory">
+                        <div class="mb-3">
+                            <label for="eng_cat" class="form-label">Name (English)</label>
+                            <input type="text" name="eng_cat" id="eng_cat" class="form-control" value="<?= $data['category_name'] ?>">
+                        </div>
+                        <div class="mb-3">
+                            <label for="hin_cat" class="form-label">Name (Hindi)</label>
+                            <input type="text" name="hin_cat" id="hin_cat" class="form-control" value="<?= $data['hindi_category_name'] ?>">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <?php require_once __DIR__ . '/layouts/footer.php'; ?>
+<?php } else {
+    echo "Invalid session, <a href='index.php'>click here</a> to login";
+}
+?>

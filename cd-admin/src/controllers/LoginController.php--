@@ -1,0 +1,60 @@
+<?php
+
+require_once __DIR__ . '/../models/UserModel.php';
+require_once __DIR__ . '/../database/Database.php';
+
+class LoginController
+{
+    public function login()
+    {
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo "Method Not Allowed";
+            exit;
+        }
+
+        session_start();
+        $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
+        $password = filter_input(INPUT_POST, 'password', FILTER_SANITIZE_STRING);
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $_SESSION['login_error'] = 'Invalid email address.';
+           header('Location: ../../index.php');
+            exit;
+        }
+
+        if (empty($password)) {
+            $_SESSION['login_error'] = 'Invalid password.';
+           header('Location: ../../index.php');
+            exit;
+        }
+
+        $database = new Database();
+        $pdo = $database->getConnection();
+
+        $userModel = new UserModel($pdo);
+
+        $user = $userModel->getUserByEmail($email);
+
+        if ($user && password_verify($password, $user['password'])) {
+
+            $_SESSION['login'] = true;
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['user_mail'] = $user['email'];
+
+            header("Location: ../../dashboard_view.php");
+            exit;
+        } else {
+            $_SESSION['login_error'] = 'Invalid email or password.';
+
+            die('FAIL');
+            header('Location: ../../index.php');
+            exit;
+        }
+    }
+
+}
+
+$controller = new LoginController();
+$controller->login();

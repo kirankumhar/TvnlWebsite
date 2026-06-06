@@ -1,0 +1,223 @@
+<?php
+require_once __DIR__ . '/../models/UpdatePostModel.php';
+require_once __DIR__ . '/../database/Database.php';
+require_once __DIR__ . '/../models/PostingModel.php';
+
+class UpdatePostController
+{
+    public function updatePosting()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo "Method Not Allowed";
+            exit;
+        }
+
+        session_start();
+
+        $database = new Database();
+        $pdo = $database->getConnection();
+
+        $Model = new UpdatePostModel($pdo);
+
+        $postingId = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
+
+        $stmt = $pdo->prepare("SELECT * FROM postings WHERE id = :postingId");
+        $stmt->bindParam(':postingId', $postingId, PDO::PARAM_INT);
+        $stmt->execute();
+        $existingData = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        $type = filter_input(INPUT_POST, 'type', FILTER_SANITIZE_STRING);
+        $category = filter_input(INPUT_POST, 'category', FILTER_SANITIZE_NUMBER_INT);
+        $sub_category = filter_input(INPUT_POST, 'subCategory', FILTER_SANITIZE_NUMBER_INT);
+        $document_no = filter_input(INPUT_POST, 'doc_nos', FILTER_SANITIZE_STRING);
+        $dated = filter_input(INPUT_POST, 'doc_date', FILTER_SANITIZE_STRING);
+        $reference_no = filter_input(INPUT_POST, 'ref_nos', FILTER_SANITIZE_STRING);
+        $reference_date = filter_input(INPUT_POST, 'ref_date', FILTER_SANITIZE_STRING);
+        $title = filter_input(INPUT_POST, 'title', FILTER_SANITIZE_STRING);
+        $new_flag = filter_input(INPUT_POST, 'new_tag', FILTER_SANITIZE_STRING);
+        $new_no_of_days = filter_input(INPUT_POST, 'new_tag_day', FILTER_SANITIZE_NUMBER_INT);
+        $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_STRING);
+        $ip_address = $_SERVER['REMOTE_ADDR'];
+        $updated_by = $_SESSION['user_id'];
+
+        $data = [];
+
+        $postingModel = new PostingModel($pdo);
+
+
+        if ($type == 'sy') {
+            if ($existingData['type'] != $_POST['sessionYear']) {
+                $data['type'] = $_POST['sessionYear'];
+                $syfy_data = $postingModel->getType($_POST['sessionYear']);
+                $currentYear = $syfy_data[0]['calender_year'];
+            } else {
+                $data['type'] = $existingData['type'];
+                $syfy_data = $postingModel->getType($existingData['type']);
+                $currentYear = $syfy_data[0]['calender_year'];
+            }
+        } elseif ($type == 'fy') {
+            if ($existingData['type'] != $_POST['financialYear']) {
+                $data['type'] = $_POST['financialYear'];
+                $syfy_data = $postingModel->getType($_POST['financialYear']);
+                $currentYear = $syfy_data[0]['calender_year'];
+            } else {
+                $currentYear = $data['type'] = $existingData['type'];
+                $syfy_data = $postingModel->getType($existingData['type']);
+                $currentYear = $syfy_data[0]['financialYear'];
+            }
+        }
+        if ($category === $existingData['category']) {
+            $data['category'] = $existingData['category'];
+        } else {
+            $data['category'] = $category;
+        }
+        if ($sub_category === $existingData['sub_category']) {
+            $data['sub_category'] = $existingData['sub_category'];
+        } else {
+            $data['sub_category'] = $sub_category;
+        }
+
+        if ($document_no === $existingData['document_no']) {
+            $data['document_no'] = $existingData['document_no'];
+        } else {
+            $data['document_no'] = $document_no;
+        }
+        if ($dated === $existingData['dated']) {
+            $data['dated'] = $existingData['dated'];
+        } else {
+            $data['dated'] = $dated;
+        }
+        if ($reference_no === $existingData['reference_no']) {
+            $data['reference_no'] = $existingData['reference_no'];
+        } else {
+            $data['reference_no'] = $reference_no;
+        }
+        if ($reference_date === $existingData['reference_date']) {
+            $data['reference_date'] = $existingData['reference_date'];
+        } else {
+            $data['reference_date'] = $reference_date;
+        }
+        if ($title === $existingData['title']) {
+            $data['title'] = $existingData['title'];
+        } else {
+            $data['title'] = $title;
+        }
+        if ($new_flag === $existingData['new_flag']) {
+            $data['new_flag'] = $existingData['new_flag'];
+        } else {
+            $data['new_flag'] = $new_flag;
+        }
+        if ($new_no_of_days === $existingData['new_no_of_days']) {
+            $data['new_no_of_days'] = $existingData['new_no_of_days'];
+        } else {
+            $data['new_no_of_days'] = $new_no_of_days;
+        }
+        if ($status === $existingData['status']) {
+            $data['status'] = $existingData['status'];
+        } else {
+            $data['status'] = $status;
+        }
+
+        $data['id'] = $postingId;
+        $data['ip_address'] = $ip_address;
+        $data['updated_by'] = $updated_by;
+
+        if (empty($existingData['attachment'])) {
+
+            if (isset($_FILES['attachment']) && $_FILES['attachment']['error'] === UPLOAD_ERR_OK) {
+                $attachment = $_FILES['attachment'];
+
+                $allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+                $maxFileSize = 2 * 1024 * 1024; // 2 MB limit
+
+                if (!in_array($attachment['type'], $allowedTypes)) {
+                    $_SESSION['error'] = "Invalid file type.";
+                    header("Location: ../../edit-postings.php?id=" . $data['id']);
+                    exit;
+                }
+
+                if ($attachment['size'] > $maxFileSize) {
+                    $_SESSION['error'] = "File size exceeds the limit.";
+                    header("Location: ../../edit-postings.php?id=" . $data['id']);
+                    exit;
+                }
+
+                $category = $postingModel->getCategoryName($data['category']);
+                $catName = $category[0]['category_name'];
+
+                $uploadDir = dirname(dirname(__FILE__)) . '/uploads/' . $catName . '/';
+                $saveDir = "/src/uploads/$catName/";
+
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
+
+                $subcategory = $postingModel->getSubCategoryName($data['sub_category']);
+                $subCatName = $subcategory[0]['sub_category_name'];
+
+                if (empty($data['sub_category'])) {
+                    $saveDir = "/src/uploads/$catName/$currentYear/";
+
+                    $uploadDir = dirname(dirname(__FILE__)) . '/uploads/' . $catName . '/' . $currentYear . '/';
+
+                    if (!is_dir($uploadDir)) {
+                        mkdir($uploadDir, 0755, true);
+                    }
+                } else {
+                    $saveDir = "/src/uploads/$catName/$subCatName/";
+
+                    $uploadDir = dirname(dirname(__FILE__)) . '/uploads/' . $catName . '/' . $subCatName . '/';
+                    if (!is_dir($uploadDir)) {
+                        mkdir($uploadDir, 0755, true);
+                    }
+                    $saveDir = "/src/uploads/$catName/$subCatName/$currentYear/";
+
+                    $uploadDir = dirname(dirname(__FILE__)) . '/uploads/' . $catName . '/' . $subCatName . '/' . $currentYear . '/';
+
+                    if (!is_dir($uploadDir)) {
+                        mkdir($uploadDir, 0755, true);
+                    }
+                }
+
+                $targetFile = $saveDir . basename($attachment['name']);
+                $targetUploadDir = $uploadDir . basename($attachment['name']);
+
+                // $targetFile = $uploadDir . basename($attachment['name']);
+
+                if (!move_uploaded_file($attachment['tmp_name'], $targetUploadDir)) {
+
+                    $_SESSION['error'] = "Failed to upload the file.";
+                    header("Location: ../../edit-postings.php?id=" . $data['id']);
+                    exit;
+                } else {
+                    $data['attachment'] = $targetFile;
+                }
+
+
+            } else {
+                $_SESSION['error'] = "No file uploaded or file upload error.";
+                header("Location: ../../edit-postings.php?id=" . $data['id']);
+                exit;
+            }
+        } else {
+            $data['attachment'] = $existingData['attachment'];
+        }
+
+        if ($Model->updatePosting($data)) {
+
+            $_SESSION['message'] = "Posting updated successfully.";
+            header("Location: ../../edit-postings.php?id=" . $postingId);
+            exit;
+        } else {
+            $_SESSION['error'] = "Failed to update posting.";
+            header("Location: ../../edit-postings.php?id=" . $postingId);
+            exit;
+        }
+    }
+}
+
+$controller = new UpdatePostController();
+$controller->updatePosting();
+
+?>
