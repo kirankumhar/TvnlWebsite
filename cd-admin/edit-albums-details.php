@@ -91,23 +91,7 @@ if (isset($_SESSION['user_id'])) {
 
                         <!-- *********************************** -->
                         <div class="row mt-2">
-                            <div class="col-md-6">
-                                <!-- Date of Event -->
-                                <div class="form-group">
-                                    <label for="domainId">Domain: <span class="text-danger">*</span></label>
-                                    <select name="domainId" id="domainId" class="form-select" required <?= ($domainId > 0) ? 'disabled' : '' ?>>
-                                        <option value="">Choose domain...</option>
-                                        <?php foreach ($domains_data as $values): ?>
-                                            <option value="<?php echo htmlspecialchars($values['id']); ?>" <?php if (!empty($album['domain_id']) && $album['domain_id'] == $values['id']) echo 'selected'; ?>>
-                                                <?php echo htmlspecialchars($values['eng_name']) . ' / ' . htmlspecialchars($values['hin_name']); ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <?php if ($domainId > 0): ?>
-                                        <input type="hidden" name="domainId" value="<?= (int)$domainId; ?>">
-                                    <?php endif; ?>
-                                </div>
-                            </div>
+                            
                             <div class="col-md-6">
                                 <!-- Date of Event -->
                                 <div class="form-group">

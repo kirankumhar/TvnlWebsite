@@ -1184,45 +1184,58 @@ const nextBtn = document.getElementById("nextBtn");
 let images = [];
 let index = 0;
 
-gallery.addEventListener("click", (e) => {
-  if (e.target.tagName === "IMG") {
-    images = [...gallery.querySelectorAll("img")];
-    index = images.indexOf(e.target);
-    openLightbox();
-  }
-});
+if (gallery) {
+  gallery.addEventListener("click", (e) => {
+    if (e.target.tagName === "IMG") {
+      images = [...gallery.querySelectorAll("img")];
+      index = images.indexOf(e.target);
+      openLightbox();
+    }
+  });
+}
 
 function openLightbox() {
-  lightbox.classList.add("active");
-  lightboxImg.src = images[index].src;
+  if (lightbox && lightboxImg && images[index]) {
+    lightbox.classList.add("active");
+    lightboxImg.src = images[index].src;
+  }
 }
 
 function closeLightbox() {
-  lightbox.classList.remove("active");
+  if (lightbox) {
+    lightbox.classList.remove("active");
+  }
 }
 
 function nextImage() {
-  index = (index + 1) % images.length;
-  lightboxImg.src = images[index].src;
+  if (images.length > 0 && lightboxImg) {
+    index = (index + 1) % images.length;
+    lightboxImg.src = images[index].src;
+  }
 }
 
 function prevImage() {
-  index = (index - 1 + images.length) % images.length;
-  lightboxImg.src = images[index].src;
+  if (images.length > 0 && lightboxImg) {
+    index = (index - 1 + images.length) % images.length;
+    lightboxImg.src = images[index].src;
+  }
 }
 
-closeBtn.onclick = closeLightbox;
-nextBtn.onclick = nextImage;
-prevBtn.onclick = prevImage;
+if (closeBtn) closeBtn.onclick = closeLightbox;
+if (nextBtn) nextBtn.onclick = nextImage;
+if (prevBtn) prevBtn.onclick = prevImage;
 
-lightbox.onclick = (e) => {
-  if (e.target === lightbox) closeLightbox();
-};
+if (lightbox) {
+  lightbox.onclick = (e) => {
+    if (e.target === lightbox) closeLightbox();
+  };
+}
 
 document.addEventListener("keydown", (e) => {
-  if (!lightbox.classList.contains("active")) return;
-  if (e.key === "Escape") closeLightbox();
-  if (e.key === "ArrowRight") nextImage();
-  if (e.key === "ArrowLeft") prevImage();
+  if (lightbox && lightbox.classList.contains("active")) {
+    if (e.key === "Escape") closeLightbox();
+    if (e.key === "ArrowRight") nextImage();
+    if (e.key === "ArrowLeft") prevImage();
+  }
 });
 $(window).enllax();

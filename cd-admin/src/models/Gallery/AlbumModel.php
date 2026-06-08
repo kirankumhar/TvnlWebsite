@@ -10,12 +10,12 @@ class AlbumModel
         $this->pdo = $pdo;
     }
 
-    public function createAlbum($domainId, $name_en, $name_hi, $description_en, $location, $event_date, $type, $uid, $session_year)
+    public function createAlbum($name_en, $name_hi, $description_en, $location, $event_date, $type, $uid, $session_year)
     {
-        $sql = "INSERT INTO albums (domain_id, name_en, name_hi, description_en,  location, event_date, created_at, type, uniq_id, session_year)
-                VALUES ( ?, ?, ?, ?, ?, ?, NOW(), ?,?, ?)";
+        $sql = "INSERT INTO albums (name_en, name_hi, description_en,  location, event_date, created_at, type, uniq_id, session_year)
+                VALUES ( ?, ?, ?, ?, ?, NOW(), ?,?, ?)";
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([$domainId, $name_en, $name_hi, $description_en, $location, $event_date, $type, $uid, $session_year]);
+        $stmt->execute([$name_en, $name_hi, $description_en, $location, $event_date, $type, $uid, $session_year]);
         return $this->pdo->lastInsertId();
     }
 

@@ -27,16 +27,7 @@ class NewsController
     {
         // Extract the year and month from the event date
         $year = date('Y', strtotime($event_date));
-        $month = date('m', strtotime($event_date));
-
-        // Check if the month is before or after April
-        if ($month >= 4) {
-            // If the month is April or later, the session year is the current year to the next year
-            return $year . '-' . ($year + 1);
-        } else {
-            // If the month is before April, the session year is the previous year to the current year
-            return ($year - 1) . '-' . $year;
-        }
+        return $year;
     }
 
     private function generateUniqueTenderID($length = 6)
@@ -53,31 +44,6 @@ class NewsController
         $stmt->execute([$newsID]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row['count'] > 0;
-    }
-
-    private function resolveDomainId($domainId, $categoryId, $subCategoryId = null)
-    {
-        if (!empty($domainId)) {
-            return $domainId;
-        }
-
-        if (!empty($categoryId)) {
-            $stmt = $this->pdo->prepare("SELECT domain_id FROM category_master WHERE id = :categoryId LIMIT 1");
-            $stmt->bindValue(':categoryId', (int)$categoryId, PDO::PARAM_INT);
-            $stmt->execute();
-
-            return $stmt->fetchColumn() ?: $domainId;
-        }
-
-        if (empty($subCategoryId)) {
-            return $domainId;
-        }
-
-        $stmt = $this->pdo->prepare("SELECT domain_id FROM sub_category WHERE id = :subCategoryId LIMIT 1");
-        $stmt->bindValue(':subCategoryId', (int)$subCategoryId, PDO::PARAM_INT);
-        $stmt->execute();
-
-        return $stmt->fetchColumn() ?: $domainId;
     }
 
     private function createDirectoryIfNotExists($baseDir)
@@ -138,16 +104,7 @@ class NewsController
 
         // print_r($_POST); die();
 
-        $_POST['domainId'] = $this->resolveDomainId(
-            $_POST['domainId'] ?? null,
-            $_POST['categoryId'] ?? null,
-            $_POST['subCategoryId'] ?? null
-        );
-
         // Basic validations
-        if (empty($_POST['domainId'])) {
-            $errors['domainId'] = "Domain is required";
-        }
         if (empty($_POST['news_date'])) {
             $errors['news_date'] = "News Date is required";
         }
@@ -254,19 +211,6 @@ class NewsController
 
         // Generate unique ID and prepare paths
         $uniqueTenderID = $this->generateUniqueTenderID();
-        $domainId = $_POST['domainId'];
-        $subCategoryId = $_POST['subCategoryId'] ?? NULL;
-        $stmt = $this->pdo->prepare(
-            "SELECT category_id 
-            FROM sub_category 
-            WHERE id = :subCategoryId 
-            AND is_deleted = '0'
-            LIMIT 1"
-        );
-
-        $stmt->execute(['subCategoryId' => $subCategoryId]);
-        $categoryId = $stmt->fetchColumn();
-        $childSubCategoryId = $_POST['childSubCategoryId'] ?? NULL;
         $news_date = $_POST['news_date'];
         $news_title = $_POST['news_title'];
         $news_title_hin = $_POST['news_title_hin'];
@@ -278,14 +222,14 @@ class NewsController
         $allowed_tags = '<p></p><a></a><b></b><u></u><strong></strong><em></em><ul></ul><ol></ol><li></li><i></i><table></table>';
         $news_description = strip_tags($_POST['news_description'], $allowed_tags);
         $location = $_POST['location'] ?? null;
-        $hash_tag = $_POST['hashtag'] ?? null;
+        $hash_tag = $_POST['hashTag'] ?? null;
 
         $img_allowed_extensions = ["jpg", "jpeg", "gif", "png"];
         $max_allowed_file_size = 500; // in KB
         $uploads_dir = "uploads/News/$year/$mon/$uniqueTenderID/";
 
         // Upload main picture
-        $news_picture = $this->pdfUpload('picture1', $uploads_dir, ['jpg', 'jpeg']);
+        $news_picture = $this->pdfUpload('picture1', $uploads_dir, $img_allowed_extensions);
 
         if (!$news_picture) {
             $_SESSION['error_message'] = "Error uploading the title picture.";
@@ -352,8 +296,8 @@ class NewsController
         try {
             $this->pdo->beginTransaction();
             $stmt = $this->pdo->prepare(
-                "INSERT INTO news 
-                (uniq_id, domain_id, category_id, sub_category_id, child_sub_category_id, news_title, news_title_hin, news_event_date, news_description, hashtag, news_pic1, news_pic2, created_by, 
+                "INSERT INTO news
+                (uniq_id, news_title, news_title_hin, news_event_date, news_description, hashtag, news_pic1, news_pic2, created_by, 
                  video_attach_1, video_attach_title1, 
                  video_attach_2, video_attach_title2, 
                  video_attach_3, video_attach_title3, 
@@ -367,58 +311,63 @@ class NewsController
                  pdf_attachement7, pdf_attachement_title7, 
                  pdf_attachement8, pdf_attachement_title8, 
                  `location`, session_year) 
-                VALUES 
-                (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                VALUES
+                (:uniq_id, :news_title, :news_title_hin, :news_event_date, :news_description, :hashtag, :news_pic1, :news_pic2, :created_by, 
+                 :video_attach_1, :video_attach_title1, 
+                 :video_attach_2, :video_attach_title2, 
+                 :video_attach_3, :video_attach_title3, 
+                 :video_attach_4, :video_attach_title4,
+                 :pdf_attachement1, :pdf_attachement_title1, 
+                 :pdf_attachement2, :pdf_attachement_title2, 
+                 :pdf_attachement3, :pdf_attachement_title3, 
+                 :pdf_attachement4, :pdf_attachement_title4, 
+                 :pdf_attachement5, :pdf_attachement_title5, 
+                 :pdf_attachement6, :pdf_attachement_title6, 
+                 :pdf_attachement7, :pdf_attachement_title7, 
+                 :pdf_attachement8, :pdf_attachement_title8, 
+                 :location, :session_year)"
             );
 
             $stmt->execute([
-                $uniqueTenderID,
-                $domainId,
-                $categoryId,
-                $subCategoryId,
-                $childSubCategoryId,
-                $news_title,
-                $news_title_hin,
-                $news_date,
-                $news_description,
-                $hash_tag,
-                $news_picture,
-                $other_images,
-                $_SESSION['user_id'],
-                $video1,
-                $video_title1,
-                $video2,
-                $video_title2,
-                $video3,
-                $video_title3,
-                $video4,
-                $video_title4,
-                $pdf_attachement1,
-                $pdf_attachement_title1,
-                $pdf_attachement2,
-                $pdf_attachement_title2,
-                $pdf_attachement3,
-                $pdf_attachement_title3,
-                $pdf_attachement4,
-                $pdf_attachement_title4,
-                $pdf_attachement5,
-                $pdf_attachement_title5,
-                $pdf_attachement6,
-                $pdf_attachement_title6,
-                $pdf_attachement7,
-                $pdf_attachement_title7,
-                $pdf_attachement8,
-                $pdf_attachement_title8,
-                $location,
-                $session_year
+                ':uniq_id' => $uniqueTenderID,
+                ':news_title' => $news_title,
+                ':news_title_hin' => $news_title_hin,
+                ':news_event_date' => $news_date,
+                ':news_description' => $news_description,
+                ':hashtag' => $hash_tag,
+                ':news_pic1' => $news_picture,
+                ':news_pic2' => $other_images,
+                ':created_by' => $_SESSION['user_id'],
+                ':video_attach_1' => $video1,
+                ':video_attach_title1' => $video_title1,
+                ':video_attach_2' => $video2,
+                ':video_attach_title2' => $video_title2,
+                ':video_attach_3' => $video3,
+                ':video_attach_title3' => $video_title3,
+                ':video_attach_4' => $video4,
+                ':video_attach_title4' => $video_title4,
+                ':pdf_attachement1' => $pdf_attachement1,
+                ':pdf_attachement_title1' => $pdf_attachement_title1,
+                ':pdf_attachement2' => $pdf_attachement2,
+                ':pdf_attachement_title2' => $pdf_attachement_title2,
+                ':pdf_attachement3' => $pdf_attachement3,
+                ':pdf_attachement_title3' => $pdf_attachement_title3,
+                ':pdf_attachement4' => $pdf_attachement4,
+                ':pdf_attachement_title4' => $pdf_attachement_title4,
+                ':pdf_attachement5' => $pdf_attachement5,
+                ':pdf_attachement_title5' => $pdf_attachement_title5,
+                ':pdf_attachement6' => $pdf_attachement6,
+                ':pdf_attachement_title6' => $pdf_attachement_title6,
+                ':pdf_attachement7' => $pdf_attachement7,
+                ':pdf_attachement_title7' => $pdf_attachement_title7,
+                ':pdf_attachement8' => $pdf_attachement8,
+                ':pdf_attachement_title8' => $pdf_attachement_title8,
+                ':location' => $location,
+                ':session_year' => $session_year
             ]);
 
             $data = [
                 'uniq_id'                => $uniqueTenderID,
-                'domain_id'              => $domainId,
-                'category_id'            => $categoryId,
-                'sub_category_id'        => $subCategoryId,
-                'child_sub_category_id'  => $childSubCategoryId,
                 'news_title'             => $news_title,
                 'news_title_hin'         => $news_title_hin,
                 'news_event_date'        => $news_date,
@@ -496,16 +445,7 @@ class NewsController
 
         $errors = [];
 
-        $_POST['domainId'] = $this->resolveDomainId(
-            $_POST['domainId'] ?? null,
-            $_POST['categoryId'] ?? null,
-            $_POST['subCategoryId'] ?? null
-        );
-
         // Basic validations
-        if (empty($_POST['domainId'])) {
-            $errors['domainId'] = "Domain is required";
-        }
         if (empty($_POST['news_date'])) {
             $errors['news_date'] = "News Date is required";
         }
@@ -579,19 +519,6 @@ class NewsController
         }
 
         $uniqueTenderID = $existingNews['uniq_id'];
-        $domainId = $_POST['domainId'];
-        $subCategoryId = $_POST['subCategoryId'] ?? NULL;
-        $stmt = $this->pdo->prepare(
-            "SELECT category_id 
-            FROM sub_category 
-            WHERE id = :subCategoryId
-            AND is_deleted = '0'
-            LIMIT 1"
-        );
-
-        $stmt->execute(['subCategoryId' => $subCategoryId]);
-        $categoryId = $stmt->fetchColumn();
-        $childSubCategoryId = $_POST['childSubCategoryId'] ?? NULL;
         $news_date = $_POST['news_date'];
         $news_title = $_POST['news_title'];
         $news_title_hin = $_POST['news_title_hin'];
@@ -615,7 +542,7 @@ class NewsController
         // Update main picture if a new one is uploaded
         $news_picture = $existingNews['news_pic1'];
         if (isset($_FILES['picture1']) && $_FILES['picture1']['error'] == UPLOAD_ERR_OK) {
-            $news_picture = $this->pdfUpload('picture1', $uploads_dir, ['jpg', 'jpeg']);
+            $news_picture = $this->pdfUpload('picture1', $uploads_dir, $img_allowed_extensions);
             if (!$news_picture) {
                 $_SESSION['error_message'] = "Error uploading the title picture.";
                 header("Location: ../../../edit-news.php?id=" . $newsId);
@@ -692,10 +619,6 @@ class NewsController
             $this->pdo->beginTransaction();
             $stmt = $this->pdo->prepare(
                 "UPDATE news SET
-            domain_id = ?, 
-            category_id = ?, 
-            sub_category_id = ?, 
-            child_sub_category_id = ?, 
             news_title = ?, 
             news_title_hin = ?, 
             news_event_date = ?, 
@@ -735,10 +658,6 @@ class NewsController
             );
 
             $stmt->execute([
-                $domainId,
-                $categoryId,
-                $subCategoryId,
-                $childSubCategoryId,
                 $news_title,
                 $news_title_hin,
                 $news_date,
@@ -777,11 +696,6 @@ class NewsController
             ]);
 
             $data = [
-                'domain_id'                => $domainId,
-                'category_id'              => $categoryId,
-                'sub_category_id'          => $subCategoryId,
-                'child_sub_category_id'    => $childSubCategoryId,
-
                 'news_title'               => $news_title,
                 'news_title_hin'           => $news_title_hin,
                 'news_event_date'          => $news_date,

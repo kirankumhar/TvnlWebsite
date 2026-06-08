@@ -35,12 +35,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['login_time'])) {
 <body>
   <div class="login-page">
     <!-- Floating Particles -->
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    
+
     <div class="login-container">
       <!-- <h2 class="page-title">Admin Panel</h2> -->
       <div class="login-card">

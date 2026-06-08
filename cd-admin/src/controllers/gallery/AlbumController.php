@@ -39,14 +39,14 @@ class AlbumController
 
     public function editAlbums($data)
     {
-        if (!$data || !isset($data['domainId'], $data['albumId'], $data['enAlbumTitle'], $data['dateOfEvent'], $data['location'])) {
+        // Removed domainId from validation
+        if (!$data || !isset($data['albumId'], $data['enAlbumTitle'], $data['dateOfEvent'], $data['location'])) {
             http_response_code(400);
             echo json_encode(['error' => 'Invalid data format.']);
             exit;
         }
 
-
-        $domainId = filter_var($data['domainId'], FILTER_SANITIZE_STRING);
+        // Removed domainId filter
         $albumId = filter_var($data['albumId'], FILTER_SANITIZE_STRING);
         $enAlbumTitle = htmlspecialchars($data['enAlbumTitle'], ENT_QUOTES, 'UTF-8');
         $hiAlbumTitle = htmlspecialchars($data['hiAlbumTitle'], ENT_QUOTES, 'UTF-8');
@@ -55,9 +55,6 @@ class AlbumController
         $location = htmlspecialchars($data['location'], ENT_QUOTES, 'UTF-8');
 
         $session_year = $this->getSessionYear($dateOfEvent);
-
-        // print_r($session_year);
-        // die;
 
         $stmt = $this->pdo->prepare("SELECT id FROM albums WHERE uniq_id = ?");
         $stmt->execute([$albumId]);
@@ -78,11 +75,12 @@ class AlbumController
         $this->pdo->beginTransaction();
 
         try {
+            // Removed domain_id from UPDATE query
             $stmt = $this->pdo->prepare("
-                UPDATE albums SET domain_id = ?, name_en = ?, name_hi = ?, description_en = ?, event_date = ?, location = ?, session_year = ?
+                UPDATE albums SET name_en = ?, name_hi = ?, description_en = ?, event_date = ?, location = ?, session_year = ?
                 WHERE id = ?
             ");
-            $stmt->execute([$domainId, $enAlbumTitle, $hiAlbumTitle, $enAlbumDescription, $dateOfEvent, $location, $session_year, $albumId]);
+            $stmt->execute([$enAlbumTitle, $hiAlbumTitle, $enAlbumDescription, $dateOfEvent, $location, $session_year, $albumId]);
 
             $this->pdo->commit();
             $_SESSION['message'] = "Album details updated successfully.";

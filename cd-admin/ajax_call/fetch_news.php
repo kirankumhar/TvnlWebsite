@@ -3,6 +3,9 @@
 
 $encryption_key = 'af7af6d2f08c8e7cdc4cc2d03046453c139c09ed7a5d98ec73ac9c230ec0a2f8';
 
+// Generate a random IV for each encryption
+$iv = openssl_random_pseudo_bytes(16);
+
 // Include your database connection
 
 require_once __DIR__ . '/../src/database/Database.php';
@@ -15,7 +18,7 @@ if (isset($_POST['session_year'])) {
 
     try {
         // Prepare the SQL query
-        $query = "SELECT a.uniq_id as id, a.news_event_date as ndate, a.news_title as title, a.news_pic1  as original_path  
+        $query = "SELECT a.uniq_id as id, a.news_event_date as event_date, a.news_title as title, a.news_pic1  as original_path  
                     FROM news a 
                     WHERE a.session_year = :session_year 
                     AND a.is_deleted = 0 
@@ -33,7 +36,7 @@ if (isset($_POST['session_year'])) {
         foreach ($albums as &$album) {
             if (!empty($album['original_path'])) {
                 // Add prefix and encrypt the path
-                $originalPath = "cdgps/src/" . trim($album['original_path']);
+                $originalPath = "cd-admin/src/" . trim($album['original_path']);
                 $encryptedPath = base64_encode($originalPath);
                 $album['cover_image'] = 'enc_image.php?img=' . urlencode($encryptedPath);
 
@@ -47,9 +50,11 @@ if (isset($_POST['session_year'])) {
                 $album['id'] = '';
                 $album['id'] = $url_data;
 
-
                 // Remove the original path from response
                 unset($album['original_path']);
+            } else {
+                // Fallback for missing images
+                $album['cover_image'] = 'assets/images/resources/feature_img1.jpg';
             }
         }
 

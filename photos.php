@@ -5,7 +5,6 @@ require_once __DIR__ . '/cd-admin/src/database/Database.php';
 $database = new Database();
 $pdo = $database->getConnection();
 
-// Get selected year from URL parameter
 $selectedYear = isset($_GET['year']) ? $_GET['year'] : date('Y');
 
 // Get unique session years from albums
@@ -129,7 +128,7 @@ if (empty($sessionYears)) {
                                  
             let albumHTML = `
                 <div class="photos-gallery-card">
-                    <a href="photos-gallery.php?id=${albumId}">
+                    <a href="photos-gallery.php?album=${albumId}">
                         <img src="${imageUrl}" alt="${escapeHtml(album_title)}" title="${escapeHtml(album_title)}" onerror="this.onerror=null; this.src='assets/images/default-album.jpg';">
                         <h5>${escapeHtml(album_title)}</h5>
                     </a>

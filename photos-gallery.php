@@ -41,7 +41,7 @@ if (isset($_GET['album'])) {
         $album = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$album) {
-            header("Location: photo_gallery.php");
+            header("Location: photos.php");
             exit;
         }
 
@@ -86,7 +86,7 @@ if (isset($_GET['album'])) {
         $photos = $stmt1->fetchAll(PDO::FETCH_ASSOC);
 
         // Get other albums
-        $otherQuery = "SELECT a.name_en, p.file_path, a.event_date, a.uniq_id
+        $otherQuery = "SELECT a.name_en, p.file_path, a.event_date, a.uniq_id, a.description_en
                        FROM albums a
                        INNER JOIN photos p ON a.cover_photo_id = p.id
                        WHERE a.is_deleted = 0
@@ -111,11 +111,11 @@ if (isset($_GET['album'])) {
             return urlencode($encrypted_data);
         }
     } catch (Exception $e) {
-        header("Location: photo_gallery.php");
+        header("Location: photos.php");
         exit;
     }
 } else {
-    header("Location: photo_gallery.php");
+    header("Location: photos.php");
     exit;
 }
 ?>
@@ -143,77 +143,37 @@ if (isset($_GET['album'])) {
                     ← Back To Photos
                 </a>
 
-                <label class="session-taxt text-primary">Year</label>
-                <select class="session-photo" title="Year">
-                    <option>2026</option>
-                    <option>2025</option>
-                    <option>2024</option>
-                </select>
             </div>
         </div>
 
         <div class="photo-title-gallery">
-            <h2 class=""> This is photo gallery</h2>
-            <h2>23 January 2026</h2>
+            <h2 class=""><?= htmlspecialchars($album['name_en']); ?></h2>
+            <h2><?= htmlspecialchars($dateOfEvent); ?></h2>
             <p align="justify">
-                Tenughat Vidyut Nigam Limited (TVNL) is the only government-owned thermal power plant in Jharkhand with an installed capacity of 210×2 MW. The plant is located at Lalpania in Bokaro District, providing reliable and sustainable energy for the state.</p>
+                <?= htmlspecialchars($album['description_en']); ?>
+            </p>
         </div>
 
         <div class="gallery-container" id="gallery">
-
-            <div class="gallery-item">
-                <img src="assets/images/gallery/activities/actv1.png" alt="Photos gallery TVNL"
-                    title="Photos gallery TVNL">
-            </div>
-
-            <div class="gallery-item">
-                <img src="assets/images/gallery/activities/news-b.jpg" alt="Photos gallery TVNL"
-                    title="Photos gallery TVNL">
-            </div>
-
-            <div class="gallery-item">
-                <img src="assets/images/gallery/activities/sustainability.jpg" alt="Photos gallery TVNL"
-                    title="Photos gallery TVNL">
-            </div>
-
-            <div class="gallery-item">
-                <img src="assets/images/gallery/activities/actv1.png" alt="Photos gallery TVNL"
-                    title="Photos gallery TVNL">
-            </div>
-            <div class="gallery-item">
-                <img src="assets/images/gallery/activities/news-b.jpg" alt="Photos gallery TVNL"
-                    title="Photos gallery TVNL">
-            </div>
-            <div class="gallery-item">
-                <img src="assets/images/gallery/activities/news-b.jpg" alt="Photos gallery TVNL"
-                    title="Photos gallery TVNL">
-            </div>
-
-            <div class="gallery-item">
-                <img src="assets/images/gallery/activities/sustainability.jpg" alt="Photos gallery TVNL"
-                    title="Photos gallery TVNL">
-            </div>
-            <div class="gallery-item">
-                <img src="assets/images/gallery/activities/actv1.png" alt="Photos gallery TVNL"
-                    title="Photos gallery TVNL">
-            </div>
-            <div class="gallery-item">
-                <img src="assets/images/gallery/activities/sustainability.jpg" alt="Photos gallery TVNL"
-                    title="Photos gallery TVNL">
-            </div>
-            <div class="gallery-item">
-                <img src="assets/images/gallery/activities/actv1.png" alt="Photos gallery TVNL"
-                    title="Photos gallery TVNL">
-            </div>
-            <div class="gallery-item">
-                <img src="assets/images/gallery/activities/sustainability.jpg" alt="Photos gallery TVNL"
-                    title="Photos gallery TVNL">
-            </div>
-            <div class="gallery-item">
-                <img src="assets/images/gallery/activities/news-b.jpg" alt="Photos gallery TVNL"
-                    title="Photos gallery TVNL">
-            </div>
-
+            <?php if (!empty($photos)): ?>
+                <?php foreach ($photos as $photo): 
+                $photoURL = htmlspecialchars($photo['file_path']);
+                $photoCaptionEn = !empty($photo['caption_en']) ? htmlspecialchars($photo['caption_en']) : '';
+                
+                // For thumbnail - use encrypted path
+                $originalPath = "cd-admin/src/" . $photoURL;
+                $encryptedPath = base64_encode($originalPath);
+                $img = 'enc_image.php?img=' . urlencode($encryptedPath);
+                
+                // For lightbox - use actual image path
+                $actualImagePath = "cdgps/src/" . $photoURL;
+                ?>
+                    <div class="gallery-item">
+                        <img src="<?= $img ?>" alt="Photos gallery TVNL"
+                            title="Photos gallery TVNL">
+                    </div>
+                <?php endforeach; ?>
+            <?php endif;?>  
         </div>
 
         <div class="lightbox" id="lightbox">

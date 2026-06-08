@@ -26,10 +26,8 @@ class AlbumController
         $albumModel = new AlbumModel($pdo);
 
         session_start();
-        $domainStmt = $pdo->prepare("SELECT domain_id FROM users WHERE id = :userId LIMIT 1");
-        $domainStmt->bindValue(':userId', (int)$_SESSION['user_id'], PDO::PARAM_INT);
-        $domainStmt->execute();
-        $domainId = (int)$domainStmt->fetchColumn();
+        
+        // Removed domain_id related code
         $name_en = filter_input(INPUT_POST, 'eng_cat', FILTER_SANITIZE_STRING);
         $name_hi = filter_input(INPUT_POST, 'hin_cat', FILTER_SANITIZE_STRING);
         $description_en = filter_input(INPUT_POST, 'en_albm_desc');
@@ -73,7 +71,7 @@ class AlbumController
 
         try {
             $pdo->beginTransaction();
-            $album_id = $albumModel->createAlbum($domainId, $name_en, $name_hi, $description_en, $location, $event_date, $type, $uid, $session_year);
+            $album_id = $albumModel->createAlbum($name_en, $name_hi, $description_en, $location, $event_date, $type, $uid, $session_year);
 
             switch ($type) {
                 case 'Videos':

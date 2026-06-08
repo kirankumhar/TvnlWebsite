@@ -19,17 +19,6 @@ if (isset($_SESSION['user_id'])) {
     $stmt->execute();
     $data = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    $domainId = $data['domain_id'];
-    $sql = "SELECT * FROM category_master WHERE domain_id = $domainId";
-    $categories = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
-
-    $categoryId = $data['category_id'];
-    $sql = "SELECT * FROM sub_category WHERE category_id = '$categoryId'";
-    $subcategories = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
-
-    $subcategoryId = $data['sub_category_id'];
-    $sql = "SELECT * FROM child_sub_category WHERE subcategory_id = $subcategoryId";
-    $childsubcategories = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
     <script src="https://cdn.ckeditor.com/4.9.2/standard/ckeditor.js"></script>
@@ -100,57 +89,7 @@ if (isset($_SESSION['user_id'])) {
                     <?php } ?>
 
                     <div class="row">
-                        <div class="col-md-6">
-                            <input type="hidden" name="page" id="currentPage" value="news">
-                            <!-- News Date -->
-                            <div class="mb-3">
-                                <label for="domainId" class="form-label">Domains<span
-                                        class="text-danger">*</span></label>
-                                <select name="domainId" id="subCategoryList" class="form-select" required <?= ($domainId > 0) ? 'disabled' : '' ?>>
-                                    <option value="">Choose domain...</option>
-                                    <?php foreach ($domains_data as $values): ?>
-                                        <option value="<?php echo htmlspecialchars($values['id']); ?>" <?php if (!empty($data['domain_id']) && $data['domain_id'] == $values['id']) echo 'selected'; ?>>
-                                            <?php echo htmlspecialchars($values['eng_name']) . ' / ' . htmlspecialchars($values['hin_name']); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <?php if ($domainId > 0): ?>
-                                    <input type="hidden" name="domainId" value="<?= (int)$domainId; ?>">
-                                <?php endif; ?>
-                                <?php if (isset($err['domainId'])) { ?>
-                                    <div class="form-text text-danger"><?php echo $err['domainId']; ?></div>
-                                <?php } ?>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <!-- News Date -->
-                            <div class="mb-3">
-                                <label for="subCategoryId" class="form-label">Category</label>
-                                <select name="subCategoryId" id="postcategoryId" class="form-select">
-                                    <option value="">Choose Sub Category...</option>
-                                    <?php foreach ($subcategories as $subcategory): ?>
-                                        <option value="<?php echo htmlspecialchars($subcategory['id']); ?>" <?= $subcategory['id'] == $data['sub_category_id'] ? 'selected' : '' ?>>
-                                            <?php echo htmlspecialchars($subcategory['sub_category_name']); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <!-- News Date -->
-                            <div class="mb-3">
-                                <label for="childSubCategoryId" class="form-label">Sub Category</label>
-                                <select name="childSubCategoryId" id="SubCategoryId" class="form-select">
-                                    <option value="">Choose Child Sub Category...</option>
-                                    <?php foreach ($childsubcategories as $childsubcategory): ?>
-                                        <option value="<?php echo htmlspecialchars($childsubcategory['id']); ?>" <?= $childsubcategory['id'] == $data['child_sub_category_id'] ? 'selected' : '' ?>>
-                                            <?php echo htmlspecialchars($childsubcategory['child_sub_category_name']); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                        </div>
-
+                        <input type="hidden" name="page" id="currentPage" value="news">
                         <div class="col-md-6">
                             <input type="hidden" name="post" value="<?= $postingId ?>">
                             <!-- News Date -->

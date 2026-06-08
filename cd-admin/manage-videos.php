@@ -9,13 +9,7 @@ require_once __DIR__ . '/layouts/header.php';
 $module = 'mediavideo';
 
 $params = [];
-$sql = "SELECT cm.*, p.video_link, dm.eng_name FROM albums cm LEFT JOIN videos p on p.id = cm.cover_video_id JOIN domains as dm ON dm.id = cm.domain_id WHERE cm.type='Videos' AND cm.is_deleted='0'";
-
-if ($domainId > 0) {
-    $sql .= " AND cm.domain_id = ?";
-    $params[] = $domainId;
-}
-$sql .= " ORDER BY cm.created_at desc";
+$sql = "SELECT cm.*, p.video_link FROM albums cm LEFT JOIN videos p on p.id = cm.cover_video_id WHERE cm.type='Videos' AND cm.is_deleted='0' ORDER BY cm.created_at desc";
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
@@ -60,7 +54,6 @@ $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <thead>
                     <tr>
                         <th>S.No.</th>
-                        <th>Domain</th>
                         <th>Album Title</th>
                         <th>Event Date</th>
                         <th>Edit Album</th>
@@ -74,10 +67,8 @@ $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     foreach ($categories as $row): ?>
                         <tr>
                             <td><?php echo $i++; ?></td>
-                            <td><?php echo htmlspecialchars($row['eng_name']); ?></td>
                             <td><?php echo htmlspecialchars($row['name_en']); ?></td>
                             <td style="white-space: nowrap;"><?php echo htmlspecialchars(date("d-M-Y", strtotime($row['event_date']))); ?></td>
-                            </td>
                             <td>
                                 <a href="<?= $base_url ?>/edit-albums-details.php?album_id=<?php echo htmlspecialchars($row['uniq_id']) ?>"
                                     title="Edit Video Album Details" class="btn btn-primary"><i

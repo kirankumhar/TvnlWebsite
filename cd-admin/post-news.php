@@ -11,20 +11,6 @@ if (isLoggedIn()) {
     $title = "Admin - Post News";
     require_once __DIR__ . '/layouts/header.php';
 
-    $params = [];
-    $subCategorySql = "SELECT id, sub_category_name, domain_id FROM sub_category WHERE is_deleted = '0'";
-
-    if ($domainId > 0) {
-        $subCategorySql .= " AND domain_id = ?";
-        $params[] = $domainId;
-    }
-
-    $subCategorySql .= " AND sub_category_name LIKE ? ORDER BY sub_category_name ASC";
-    $params[] = "%news%";
-
-    $subCategoryStmt = $pdo->prepare($subCategorySql);
-    $subCategoryStmt->execute($params);
-    $subCategories = $subCategoryStmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
     <script src="https://cdn.ckeditor.com/4.9.2/standard/ckeditor.js"></script>
@@ -94,32 +80,7 @@ if (isLoggedIn()) {
 
                     <div class="row">
                         <input type="hidden" name="page" id="currentPage" value="news">
-                        <input type="hidden" name="domainId" id="domainId" value="<?= (int)$domainId; ?>">
                         <div class="col-md-6">
-                            <!-- News Date -->
-                            <div class="mb-3">
-                                <label for="subCategoryId" class="form-label">Sub Category</label>
-                                <select name="subCategoryId" id="postcategoryId" class="form-select" required>
-                                    <option value="">Choose Category...</option>
-                                    <?php foreach ($subCategories as $subCategory): ?>
-                                        <option value="<?= (int)$subCategory['id']; ?>" data-domain-id="<?= (int)$subCategory['domain_id']; ?>">
-                                            <?= htmlspecialchars($subCategory['sub_category_name']); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <!-- News Date -->
-                            <div class="mb-3">
-                                <label for="childSubCategoryId" class="form-label">Child Sub Category</label>
-                                <select name="childSubCategoryId" id="SubCategoryId" class="form-select">
-                                    <option value="">Choose Child Sub Category...</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <!-- News Date -->
                             <div class="mb-3">
                                 <label for="news_date" class="form-label">Date of News <span
                                         class="text-danger">*</span></label>
@@ -539,13 +500,6 @@ if (isLoggedIn()) {
                         <button type="submit" class="btn btn-primary">Post News</button>
                     </div>
                 </form>
-                <script>
-                    document.getElementById('postcategoryId').addEventListener('change', function () {
-                        var selected = this.options[this.selectedIndex];
-                        document.getElementById('domainId').value = selected.dataset.domainId || '<?= (int)$domainId; ?>';
-                    });
-                </script>
-
             </div>
         </div>
     </div>

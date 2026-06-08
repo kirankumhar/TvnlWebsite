@@ -30,6 +30,7 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
+  
   background: linear-gradient(
     -45deg,
     #667eea,
@@ -39,6 +40,7 @@ a {
     #00f2fe,
     #667eea
   );
+  
   background-size: 400% 400%;
   padding: 2rem 0;
   position: relative;

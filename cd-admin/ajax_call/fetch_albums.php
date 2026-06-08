@@ -89,6 +89,12 @@ try {
             $url_data = urlencode($encrypted_data);
             $album['id'] = $url_data;
             $album['cover_image'] = $album['original_path'] ?? 'assets/images/default-video.jpg';
+            
+            // Format date
+            if (!empty($album['event_date'])) {
+                $album['formatted_date'] = date('d M Y', strtotime($album['event_date']));
+            }
+            
             unset($album['original_path']);
         }
         

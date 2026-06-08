@@ -1,3 +1,108 @@
+<?php
+require_once __DIR__ . '/cdgps/src/database/Database.php';
+
+$database = new Database();
+$pdo = $database->getConnection();
+
+// Define the same encryption key (store this securely)
+$encryption_key = 'af7af6d2f08c8e7cdc4cc2d03046453c139c09ed7a5d98ec73ac9c230ec0a2f8';
+
+// Get and process the encrypted data
+if (isset($_GET['album'])) {
+    try {
+        // Decode the URL parameter
+        $encrypted_data = urldecode($_GET['album']);
+        $encrypted_data = base64_decode($encrypted_data);
+
+        // Split the data to get encrypted ID and IV
+        list($encrypted_id, $encoded_iv) = explode('::', $encrypted_data);
+        $iv = base64_decode($encoded_iv);
+
+        // Decrypt the ID
+        $uniq_id = openssl_decrypt($encrypted_id, 'AES-256-CBC', $encryption_key, 0, $iv);
+
+        if ($uniq_id === false) {
+            throw new Exception("Decryption failed");
+        }
+
+        $albumId = $_GET['album'] ?? 0;
+
+        $type = 'Press Clips';
+        $query = "SELECT *
+                    FROM albums a
+                    WHERE a.is_deleted = 0
+                    AND a.is_hide = 0
+                    AND a.type = :type
+                    AND a.uniq_id = :uniqId";
+
+        // Prepare and execute the statement
+        $stmt = $pdo->prepare($query);
+        $stmt->bindParam(':type', $type, PDO::PARAM_STR);
+        $stmt->bindParam(':uniqId', $uniq_id, PDO::PARAM_STR);
+        $stmt->execute();
+        $album = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        $album_id = $album['id'];
+
+        $photoQuery = "SELECT *
+                  FROM photos a
+                  WHERE a.album_id = :albumId
+                  ORDER BY position";
+
+        // Prepare and execute the statement
+        $stmt1 = $pdo->prepare($photoQuery);
+        $stmt1->bindParam(':albumId', $album_id, PDO::PARAM_INT);
+        $stmt1->execute();
+        $photos = $stmt1->fetchAll(PDO::FETCH_ASSOC);
+
+        if (!$album || !$photos) {
+            header("Location: press_clips.php");
+            exit;
+        }
+
+        $en_title = htmlspecialchars($album['name_en']);
+        $en_description = $album['description_en'];
+        if (!empty($album['event_date'])) {
+            $dateObj = new DateTime($album['event_date']);
+            $dateOfEvent = $dateObj->format('d M Y'); // 21 Feb 2025
+        } else {
+            $dateOfEvent = '';
+        }
+        
+        $location = htmlspecialchars($album['location']);
+        $coverId = $album['cover_photo_id'];
+
+        // ********* Others Album **********
+
+        $type = 'Press Clips';
+        $query = "SELECT a.name_en, p.file_path, a.event_date, a.uniq_id
+                    FROM albums a
+                    INNER JOIN photos p ON a.cover_photo_id = p.id
+                    WHERE a.is_deleted = 0
+                    AND a.is_hide = 0
+                    AND a.type = :type
+                    AND a.id <> :al_id
+                    Order BY a.event_date desc";
+
+        // Prepare and execute the statement
+        $stmt = $pdo->prepare($query);
+        $stmt->bindParam(':type', $type, PDO::PARAM_STR);
+        $stmt->bindParam(':al_id', $album_id, PDO::PARAM_STR);
+        $stmt->execute();
+        $oth_album = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    } catch (Exception $e) {
+        // Handle decryption errors
+        header("Location: press_clips.php");
+        exit;
+    }
+} else {
+    // No album parameter provided
+    header("Location: press_clips.php");
+    exit;
+}
+?>
+
 <?php include "header1.php"; ?>
 <section class="tvnl-banner">
     <img src="assets/images/banner/news-b.jpg" alt="Media - Media Coverage Gallery, Tenughat Vidyut Nigam Limited" title="Media - Media Coverage Gallery, Tenughat Vidyut Nigam Limited"

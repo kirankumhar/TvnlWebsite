@@ -25,7 +25,7 @@ class LogoutController
         session_unset();
 
         session_destroy();
-        header('Location: /cdgps');
+        header('Location: /tvnl-website');
         exit;
     }
 }

@@ -4,18 +4,12 @@ require_once __DIR__ . '/src/helpers/session_helper.php';
 requireLogin();
 
 require_once __DIR__ . '/layouts/header.php';
-$module = 'news';
-$params = [];
-$sql = "SELECT cm.*, dm.eng_name FROM news cm LEFT JOIN domains dm ON dm.id = cm.domain_id WHERE cm.is_deleted='0' ";
-
-if ($domainId > 0) {
-    $sql .= " AND cm.domain_id = ?";
-    $params[] = $domainId;
-}
+$module = 'news'; // The module is 'news'
+$sql = "SELECT cm.* FROM news cm WHERE cm.is_deleted='0' ";
 
 $sql .= " ORDER BY cm.created_at desc";
 $stmt = $pdo->prepare($sql);
-$stmt->execute($params);
+$stmt->execute();
 $news_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
