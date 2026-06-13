@@ -28,7 +28,7 @@ class CancellationController
             return null;
         }
         
-        $uploadDir = $_SERVER['DOCUMENT_ROOT'] . "/tvnl-website/cd-admin/uploads/cancellations/";
+        $uploadDir = $_SERVER['DOCUMENT_ROOT'] . "/uploads/cancellations/";
         if (!file_exists($uploadDir)) {
             mkdir($uploadDir, 0777, true);
         }
@@ -38,7 +38,7 @@ class CancellationController
         $uploadPath = $uploadDir . $fileName;
         
         if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
-            return "/tvnl-website/cd-admin/uploads/cancellations/" . $fileName;
+            return "/uploads/cancellations/" . $fileName;
         }
         return null;
     }

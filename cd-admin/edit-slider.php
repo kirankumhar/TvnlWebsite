@@ -25,7 +25,7 @@ if (!$sliderId) {
     exit;
 }
 
-// Get slider by ID (using id or uniq_id)
+// Get slider by ID (using id)
 $stmt = $pdo->prepare("SELECT * FROM sliders WHERE id = :id");
 $stmt->execute([':id' => $sliderId]);
 $slider = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -42,6 +42,15 @@ $title_value = isset($form_data['title']) ? htmlspecialchars($form_data['title']
 $subtitle_value = isset($form_data['subtitle']) ? htmlspecialchars($form_data['subtitle']) : htmlspecialchars($slider['subtitle'] ?? '');
 $make_slider_checked = isset($form_data['make_slider']) ? $form_data['make_slider'] : ($slider['make_slider'] == 1);
 $status_value = isset($form_data['status']) ? $form_data['status'] : $slider['status'];
+
+// Function to get displayable image URL
+function getDisplayImageUrl($imagePath) {
+    if (empty($imagePath)) {
+        return '';
+    }
+    // Remove 'cd-admin/src' prefix to avoid duplication
+    return str_replace('cd-admin/src', '', $imagePath);
+}
 ?>
 
 <style>
@@ -70,10 +79,13 @@ $status_value = isset($form_data['status']) ? $form_data['status'] : $slider['st
         padding: 10px;
         background: #f8f9fa;
         border-radius: 5px;
+        border: 1px solid #dee2e6;
     }
     .current-image img {
         max-height: 150px;
+        max-width: 100%;
         border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     .image-preview {
         margin-top: 10px;
@@ -81,16 +93,24 @@ $status_value = isset($form_data['status']) ? $form_data['status'] : $slider['st
         background: #f8f9fa;
         border-radius: 5px;
         display: none;
+        border: 1px solid #dee2e6;
     }
     .image-preview img {
         max-height: 200px;
         max-width: 300px;
         border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     .help-text {
         font-size: 12px;
         color: #6c757d;
         margin-top: 5px;
+    }
+    .image-info {
+        font-size: 11px;
+        color: #6c757d;
+        margin-top: 5px;
+        font-family: monospace;
     }
 </style>
 
@@ -151,13 +171,18 @@ $status_value = isset($form_data['status']) ? $form_data['status'] : $slider['st
                     <div class="mb-3">
                         <label class="form-label">Current Image</label>
                         <div class="current-image">
-                            <?php if ($slider['image_path']): ?>
-                                <img src="<?= htmlspecialchars($slider['image_path']) ?>" alt="Current Slider Image">
-                                <div class="help-text mt-2">
-                                    <i class="bi bi-info-circle"></i> Current image path: <?= basename($slider['image_path']) ?>
+                            <?php if ($slider['image_path']): 
+                                // Fix: Get displayable image URL by removing 'cd-admin/src' prefix
+                                $displayImageUrl = getDisplayImageUrl($slider['image_path']);
+                            ?>
+                                <img src="<?= htmlspecialchars($displayImageUrl) ?>" alt="Current Slider Image">
+                                <div class="image-info mt-2">
+                                    <i class="bi bi-info-circle"></i> 
+                                    <strong>Stored path:</strong> <?= htmlspecialchars($slider['image_path']) ?><br>
+                                    <strong>Display path:</strong> <?= htmlspecialchars($displayImageUrl) ?>
                                 </div>
                             <?php else: ?>
-                                <p class="text-muted">No image uploaded</p>
+                                <p class="text-muted mb-0">No image uploaded</p>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -175,8 +200,7 @@ $status_value = isset($form_data['status']) ? $form_data['status'] : $slider['st
                         </div>
                         <div id="imagePreview" class="image-preview"></div>
                     </div>
-
-                    
+                </div>
 
                 <div class="form-section">
                     <div class="form-section-title">

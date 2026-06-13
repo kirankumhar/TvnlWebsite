@@ -45,7 +45,7 @@ $base_url = getBaseUrl();
             
             foreach ($sliders as $index => $slider):
                 $imagePath = $slider['image_path'];
-                if (!empty($imagePath) && $imagePath[0] !== '/') {
+                if (!empty($imagePath)) { // Ensure imagePath is not empty
                     $imagePath = $base_url . '/' . ltrim($imagePath, '/');
                 }
                 $slideTitle = !empty($slider['title']) ? htmlspecialchars($slider['title']) : 'TVNL Slider Image';

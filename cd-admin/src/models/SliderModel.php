@@ -11,7 +11,7 @@ class SliderModel
     }
 
     /**
-     * Upload image file
+     * Upload image file (uploads to src/uploads/sliders/)
      */
     private function uploadImage($file)
     {
@@ -19,8 +19,22 @@ class SliderModel
             return null;
         }
 
-        // Create upload directory if not exists
-        $uploadDir = $_SERVER['DOCUMENT_ROOT'] . "/tvnl-website/cd-admin/uploads/sliders/";
+        // Validate file type
+        $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        if (!in_array($file['type'], $allowedTypes)) {
+            return null;
+        }
+
+        // Validate file size (max 5MB)
+        if ($file['size'] > 5 * 1024 * 1024) {
+            return null;
+        }
+
+        // Fix: Go up one level from 'models' to 'src' folder
+        // Current file: /cd-admin/src/models/SliderModel.php
+        // dirname(__DIR__) = /cd-admin/src/
+        $uploadDir = dirname(__DIR__) . '/uploads/sliders/';
+        
         if (!file_exists($uploadDir)) {
             mkdir($uploadDir, 0777, true);
         }
@@ -32,10 +46,32 @@ class SliderModel
 
         // Move uploaded file
         if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
-            return "/tvnl-website/cd-admin/uploads/sliders/" . $fileName;
+            // Return relative path from project root
+            // This will be: cd-admin/src/uploads/sliders/filename.jpg
+            return 'cd-admin/src/uploads/sliders/' . $fileName;
         }
 
         return null;
+    }
+
+    /**
+     * Delete image file from server (using dynamic path)
+     */
+    private function deleteImageFile($imagePath)
+    {
+        try {
+            // Fix: Go to project root correctly
+            // SliderModel.php is in: /cd-admin/src/models/
+            // We need to go to: /cd-admin/src/uploads/sliders/
+            $fullPath = dirname(__DIR__) . '/uploads/sliders/' . basename($imagePath);
+            
+            if (file_exists($fullPath)) {
+                return unlink($fullPath);
+            }
+        } catch (Exception $e) {
+            error_log("Delete image error: " . $e->getMessage());
+        }
+        return false;
     }
 
     /**
@@ -127,6 +163,12 @@ class SliderModel
             // Check if new image is uploaded
             $imagePath = null;
             if (isset($data['image']) && $data['image']['error'] === UPLOAD_ERR_OK) {
+                // Delete old image if exists
+                $oldSlider = $this->getSliderById($id);
+                if ($oldSlider && !empty($oldSlider['image_path'])) {
+                    $this->deleteImageFile($oldSlider['image_path']);
+                }
+                
                 $imagePath = $this->uploadImage($data['image']);
             }
 
@@ -175,10 +217,7 @@ class SliderModel
             // Get image path to delete file
             $slider = $this->getSliderById($id);
             if ($slider && !empty($slider['image_path'])) {
-                $filePath = $_SERVER['DOCUMENT_ROOT'] . $slider['image_path'];
-                if (file_exists($filePath)) {
-                    unlink($filePath);
-                }
+                $this->deleteImageFile($slider['image_path']);
             }
             
             $sql = "DELETE FROM sliders WHERE id = :id";

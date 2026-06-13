@@ -25,7 +25,7 @@ class EditTenderController
      */
     private function createDirectoryIfNotExists($baseDir)
     {
-        $fullPath = __DIR__ . '/../../../' . rtrim($baseDir, '/');
+        $fullPath = $_SERVER['DOCUMENT_ROOT'] . '/' . ltrim($baseDir, '/');
         if (!is_dir($fullPath)) {
             mkdir($fullPath, 0777, true);
         }
@@ -66,8 +66,8 @@ class EditTenderController
         // Create directory if needed
         $uploadPath = $this->createDirectoryIfNotExists($path);
         $uniqueName = time() . '_' . uniqid() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', $fileName);
-        $filePath = $uploadPath . '/' . $uniqueName;
-        $fullFilePath = __DIR__ . '/../../../' . $filePath;
+        $filePath = '/' . ltrim($uploadPath, '/') . '/' . $uniqueName;
+        $fullFilePath = $_SERVER['DOCUMENT_ROOT'] . $filePath;
 
         if (move_uploaded_file($fileTmp, $fullFilePath)) {
             return $filePath;

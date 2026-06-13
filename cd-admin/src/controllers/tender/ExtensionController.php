@@ -28,7 +28,7 @@ class ExtensionController
             return null;
         }
         
-        $uploadDir = $_SERVER['DOCUMENT_ROOT'] . "/tvnl-website/cd-admin/uploads/extensions/";
+        $uploadDir = $_SERVER['DOCUMENT_ROOT'] . "/uploads/extensions/";
         if (!file_exists($uploadDir)) {
             mkdir($uploadDir, 0777, true);
         }
@@ -38,7 +38,7 @@ class ExtensionController
         $uploadPath = $uploadDir . $fileName;
         
         if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
-            return "/tvnl-website/cd-admin/uploads/extensions/" . $fileName;
+            return "/uploads/extensions/" . $fileName;
         }
         return null;
     }

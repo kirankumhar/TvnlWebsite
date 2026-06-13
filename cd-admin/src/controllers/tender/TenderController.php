@@ -33,7 +33,7 @@ class TenderController
             return null;
         }
         
-        $uploadDir = $_SERVER['DOCUMENT_ROOT'] . "/tvnl-website/cd-admin/uploads/tenders/";
+        $uploadDir = $_SERVER['DOCUMENT_ROOT'] . "/uploads/tenders/";
         if (!empty($subFolder)) {
             $uploadDir .= $subFolder . "/";
         }
@@ -47,7 +47,7 @@ class TenderController
         $uploadPath = $uploadDir . $fileName;
         
         if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
-            $relativePath = "/tvnl-website/cd-admin/uploads/tenders/";
+            $relativePath = "/uploads/tenders/";
             if (!empty($subFolder)) {
                 $relativePath .= $subFolder . "/";
             }

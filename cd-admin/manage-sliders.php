@@ -22,18 +22,20 @@ if (isset($_POST['delete_slider']) && isset($_POST['slider_id'])) {
     $sliderId = $_POST['slider_id'];
     try {
         // Get image path to delete file
-        $stmt = $pdo->prepare("SELECT image_path FROM sliders WHERE uniq_id = :id");
+        $stmt = $pdo->prepare("SELECT image_path FROM sliders WHERE id = :id");
         $stmt->execute([':id' => $sliderId]);
         $slider = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if ($slider && !empty($slider['image_path'])) {
-            $filePath = __DIR__ . '/src/' . $slider['image_path'];
+            // Fix: Remove 'cd-admin/src/' from path to get actual file location
+            $relativePath = str_replace('cd-admin/src/', '', $slider['image_path']);
+            $filePath = __DIR__ . '/src/' . $relativePath;
             if (file_exists($filePath)) {
                 unlink($filePath);
             }
         }
         
-        $stmt = $pdo->prepare("DELETE FROM sliders WHERE uniq_id = :id");
+        $stmt = $pdo->prepare("DELETE FROM sliders WHERE id = :id");
         $stmt->execute([':id' => $sliderId]);
         $_SESSION['message'] = "Slider deleted successfully.";
     } catch (Exception $e) {
@@ -109,6 +111,13 @@ $sliders = $sliderModel->getAllSliders();
         gap: 5px;
         flex-wrap: wrap;
     }
+    /* Fix for image display */
+    .slider-img-preview {
+        max-width: 100px;
+        max-height: 60px;
+        border-radius: 5px;
+        object-fit: cover;
+    }
 </style>
 
 <div class="container-fluid">
@@ -142,9 +151,9 @@ $sliders = $sliderModel->getAllSliders();
                     <thead class="table-light">
                         <tr>
                             <th width="50">SL</th>
-                            <th>Image</th>
+                            <th width="120">Image</th>
                             <th>Title</th>
-                            <th>Display Order</th>
+                            <th width="120">Display Order</th>
                             <th width="80">Slider</th>
                             <th width="80">Status</th>
                             <th width="120">Actions</th>
@@ -153,7 +162,7 @@ $sliders = $sliderModel->getAllSliders();
                     <tbody>
                         <?php if (empty($sliders)): ?>
                             <tr>
-                                <td colspan="10" class="text-center text-muted py-4">
+                                <td colspan="7" class="text-center text-muted py-4">
                                     <i class="bi bi-inbox fs-1"></i><br>
                                     No sliders found.
                                     <div class="mt-2">
@@ -162,17 +171,20 @@ $sliders = $sliderModel->getAllSliders();
                                   </td>
                             </tr>
                         <?php else: ?>
-                            <?php 
-                             $i= 0
-                            ?>
+                            <?php $i = 0; ?>
                             <?php foreach ($sliders as $slider): ?>
-                                <?php $i++ ;?>
+                                <?php $i++; ?>
                                 <tr>
-                                    <td><?= $i ?></td>
-                                    <td>
-                                        <?php if ($slider['image_path']): ?>
-                                            <img src="<?= htmlspecialchars($slider['image_path']) ?>" 
-                                                 class="slider-image" 
+                                    <td class="text-center"><?= $i ?></td>
+                                    <td class="text-center">
+                                        <?php if ($slider['image_path']): 
+                                            // FIX: Remove 'cd-admin/src/' from path to get correct URL
+                                            // Stored: cd-admin/src/uploads/sliders/image.jpg
+                                            // Display: /uploads/sliders/image.jpg
+                                            $imageUrl = str_replace('cd-admin/', '', $slider['image_path']);
+                                        ?>
+                                            <img src="<?= htmlspecialchars($imageUrl) ?>" 
+                                                 class="slider-img-preview" 
                                                  alt="<?= htmlspecialchars($slider['title']) ?>">
                                         <?php else: ?>
                                             <span class="text-muted">No image</span>
@@ -180,6 +192,9 @@ $sliders = $sliderModel->getAllSliders();
                                     </td>
                                     <td>
                                         <strong><?= htmlspecialchars($slider['title']) ?></strong>
+                                        <?php if (!empty($slider['subtitle'])): ?>
+                                            <br><small class="text-muted"><?= htmlspecialchars($slider['subtitle']) ?></small>
+                                        <?php endif; ?>
                                     </td>
                                     <td>
                                         <input type="number" 
@@ -188,7 +203,6 @@ $sliders = $sliderModel->getAllSliders();
                                                style="width: 80px;" 
                                                data-id="<?= $slider['id'] ?>">
                                     </td>
-                                    
                                     <td class="text-center">
                                         <?php if ($slider['make_slider'] == 1): ?>
                                             <span class="slider-badge"><i class="bi bi-sliders2"></i> Yes</span>

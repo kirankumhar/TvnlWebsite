@@ -9,6 +9,11 @@ if (isset($_GET['pdf'])) {
     // Decode the path
     $pdfPath = base64_decode($encodedPath);
    
+    // Prepend document root if the path is project-relative
+    if (!empty($pdfPath) && $pdfPath[0] === '/' && !file_exists($pdfPath)) {
+        $pdfPath = $_SERVER['DOCUMENT_ROOT'] . $pdfPath;
+    }
+
     // Validate path to prevent directory traversal
     if (strpos($pdfPath, '..') !== false) {
         header("HTTP/1.0 403 Forbidden");

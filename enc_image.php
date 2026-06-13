@@ -5,6 +5,11 @@ if (isset($_GET['img'])) {
     // Decode the path
     $imagePath = base64_decode($encodedPath);
     
+    // Prepend document root if it's a project-relative path
+    if (!empty($imagePath) && $imagePath[0] === '/' && !file_exists($imagePath)) {
+        $imagePath = $_SERVER['DOCUMENT_ROOT'] . '/tvnl-website/cd-admin' . $imagePath;
+    }
+
     // Validate path to prevent directory traversal
     if (strpos($imagePath, '..') !== false) {
         header("HTTP/1.0 403 Forbidden");
