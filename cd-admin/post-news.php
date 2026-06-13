@@ -47,10 +47,6 @@ if (isLoggedIn()) {
                     enctype="multipart/form-data">
                     <input type="hidden" name="action" value="actionInsert">
                     <?php
-                    if (isset($_SESSION['error_message'])) {
-                        echo '<div style="color: red;">' . $_SESSION['error_message'] . '</div><br>';
-                        unset($_SESSION['error_message']);
-                    }
                     $err = isset($_SESSION['req_error_msg']) ? $_SESSION['req_error_msg'] : '';
                     ?>
 
@@ -67,14 +63,14 @@ if (isLoggedIn()) {
                         </div>
                     <?php } elseif (isset($_SESSION['error_message'])) { ?>
                         <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
-                            <?php echo $_SESSION['error']; ?>.
+                            <strong>Error!</strong> <?php echo $_SESSION['error_message']; ?>.
                             <button type="button"
                                 class="btn btn-sm btn-primary ml-3"
                                 aria-label="Close"
                                 onclick="closeAlert(this)">
                                 <span aria-hidden="true">&times;</span>
                             </button>
-                            <?php unset($_SESSION['error']); ?>
+                            <?php unset($_SESSION['error_message']); ?>
                         </div>
                     <?php } ?>
 

@@ -55,10 +55,40 @@ class NewsController
         return $baseDir;
     }
 
+    private function getUploadErrorMessage($errorCode)
+    {
+        switch ($errorCode) {
+            case UPLOAD_ERR_INI_SIZE:
+                return "The uploaded file exceeds the upload_max_filesize directive in php.ini.";
+            case UPLOAD_ERR_FORM_SIZE:
+                return "The uploaded file exceeds the MAX_FILE_SIZE directive in the HTML form.";
+            case UPLOAD_ERR_PARTIAL:
+                return "The uploaded file was only partially uploaded.";
+            case UPLOAD_ERR_NO_TMP_DIR:
+                return "Missing a temporary folder.";
+            case UPLOAD_ERR_CANT_WRITE:
+                return "Failed to write file to disk.";
+            case UPLOAD_ERR_EXTENSION:
+                return "A PHP extension stopped the file upload.";
+            default:
+                return "Unknown upload error.";
+        }
+    }
+
     private function pdfUpload($fieldName, $path, $allowedExtensions)
     {
         if (!isset($_FILES[$fieldName]) || $_FILES[$fieldName]['error'] == UPLOAD_ERR_NO_FILE) {
             return null; // No file uploaded
+        }
+
+        $redirectPage = (isset($_POST['post']) && !empty($_POST['post'])) 
+            ? 'edit-news.php?id=' . urlencode($_POST['post']) 
+            : 'post-news.php';
+
+        if ($_FILES[$fieldName]['error'] !== UPLOAD_ERR_OK) {
+            $_SESSION['error_message'] = "Error uploading " . $fieldName . ": " . $this->getUploadErrorMessage($_FILES[$fieldName]['error']);
+            header("Location: ../../../$redirectPage");
+            exit;
         }
 
         $fileName = $_FILES[$fieldName]["name"];
@@ -67,14 +97,14 @@ class NewsController
             $file_size_mb = $_FILES[$fieldName]['size'] / (1024 * 1024); // size in MB
 
             if (!in_array($file_ext, $allowedExtensions)) {
-                $_SESSION['error_message'] = "Invalid file type for " . $fieldName;
-                header('Location: ../../../post-news.php');
+                $_SESSION['error_message'] = "Invalid file type for " . $fieldName . ". Allowed extensions: " . implode(', ', $allowedExtensions);
+                header("Location: ../../../$redirectPage");
                 exit;
             }
 
             if ($file_size_mb > 1) {
                 $_SESSION['error_message'] = "File size for " . $fieldName . " exceeds 1MB limit.";
-                header('Location: ../../../post-news.php');
+                header("Location: ../../../$redirectPage");
                 exit;
             }
 
@@ -541,7 +571,7 @@ class NewsController
 
         // Update main picture if a new one is uploaded
         $news_picture = $existingNews['news_pic1'];
-        if (isset($_FILES['picture1']) && $_FILES['picture1']['error'] == UPLOAD_ERR_OK) {
+        if (isset($_FILES['picture1']) && $_FILES['picture1']['error'] != UPLOAD_ERR_NO_FILE) {
             $news_picture = $this->pdfUpload('picture1', $uploads_dir, $img_allowed_extensions);
             if (!$news_picture) {
                 $_SESSION['error_message'] = "Error uploading the title picture.";

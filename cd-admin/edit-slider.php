@@ -175,7 +175,7 @@ function getDisplayImageUrl($imagePath) {
                                 // Fix: Get displayable image URL by removing 'cd-admin/src' prefix
                                 $displayImageUrl = getDisplayImageUrl($slider['image_path']);
                             ?>
-                                <img src="<?= htmlspecialchars($displayImageUrl) ?>" alt="Current Slider Image">
+                                <img src="<?= $base_url ?>/src<?= htmlspecialchars($displayImageUrl) ?>" alt="Current Slider Image">
                                 <div class="image-info mt-2">
                                     <i class="bi bi-info-circle"></i> 
                                     <strong>Stored path:</strong> <?= htmlspecialchars($slider['image_path']) ?><br>

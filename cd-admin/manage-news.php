@@ -52,7 +52,7 @@ $news_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <tr>
                             <th>S.No.</th>
                             
-                            <th style="white-space: nowrap;">Session Year</th>
+                            <th style="white-space: nowrap;">Image</th>
                             <th>Title</th>
                             <th>News Date</th>
                             <th>Actions</th>
@@ -65,10 +65,15 @@ $news_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <tr>
                                 <td><?php echo $i++; ?></td>
                                 
-                                <td><?= $row['session_year'] ?></td>
+                                <td>
+                                    <?php if (!empty($row['news_pic1'])): ?>
+                                        <img src="<?= $base_url ?>/src/<?= htmlspecialchars($row['news_pic1']) ?>" style="max-width: 100px; max-height: 60px; object-fit: cover; border-radius: 5px;" alt="News Image">
+                                    <?php else: ?>
+                                        <span class="text-muted">No Image</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td><?php echo htmlspecialchars($row['news_title']); ?></td>
                                 <td style="white-space: nowrap;"><?php echo htmlspecialchars(date("d-M-Y", strtotime($row['news_event_date']))); ?></td>
-                                </td>
                                 <td style="white-space: nowrap;">
                                     <?php if (canEdit($pdo, $userId, $module)) : ?>
                                     <a href="<?= $base_url ?>/edit-news.php?id=<?php echo htmlspecialchars($row['uniq_id']) ?>"

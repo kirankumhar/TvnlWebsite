@@ -12,12 +12,18 @@ require_once __DIR__ . '/layouts/header.php';
 if (isset($_SESSION['user_id'])) {
     $title = "Admin - Post News";
 
-    $postingId = isset($_GET['id']) ? intval($_GET['id']) : 0;
+    $postingId = isset($_GET['id']) ? $_GET['id'] : 0;
 
     $stmt = $pdo->prepare("SELECT a.* FROM news a WHERE a.uniq_id = :postingId AND is_deleted='0'");
-    $stmt->bindParam(':postingId', $postingId, PDO::PARAM_INT);
+    $stmt->bindParam(':postingId', $postingId, PDO::PARAM_STR);
     $stmt->execute();
     $data = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$data) {
+        $_SESSION['error'] = "News record not found.";
+        header("Location: dashboard_view.php");
+        exit;
+    }
 
 ?>
 
@@ -54,13 +60,9 @@ if (isset($_SESSION['user_id'])) {
                     </div>
                 <?php } ?>
 
-                <form id="form" action="<?= $base_url ?>/src/controllers/news/insertNews.php" method="post" id="news_form"
+                <form action="<?= $base_url ?>/src/controllers/news/insertNews.php" method="post" id="news_form"
                     enctype="multipart/form-data">
                     <?php
-                    if (isset($_SESSION['error_message'])) {
-                        echo '<div style="color: red;">' . $_SESSION['error_message'] . '</div><br>';
-                        unset($_SESSION['error_message']);
-                    }
                     $err = isset($_SESSION['req_error_msg']) ? $_SESSION['req_error_msg'] : '';
                     ?>
 
@@ -77,14 +79,14 @@ if (isset($_SESSION['user_id'])) {
                         </div>
                     <?php } elseif (isset($_SESSION['error_message'])) { ?>
                         <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
-                            <?php echo $_SESSION['error']; ?>.
+                            <strong>Error!</strong> <?php echo $_SESSION['error_message']; ?>.
                             <button type="button"
                                 class="btn btn-sm btn-primary ml-3"
                                 aria-label="Close"
                                 onclick="closeAlert(this)">
                                 <span aria-hidden="true">&times;</span>
                             </button>
-                            <?php unset($_SESSION['error']); ?>
+                            <?php unset($_SESSION['error_message']); ?>
                         </div>
                     <?php } ?>
 
@@ -156,7 +158,7 @@ if (isset($_SESSION['user_id'])) {
                         <!-- Picture Attachments -->
                         <div class="col-md-12 mb-3">
                             <label for="picture2" class="form-label">
-                                Picture Attachments
+                                News Attachments
                                 <small class="text-primary">(Use Ctrl+click to select multiple pictures, Max
                                     6)</small>
                                 <small class="text-muted">(File size must be less than 500kb)</small>
@@ -200,7 +202,7 @@ if (isset($_SESSION['user_id'])) {
                                     <label class="videoAttach2 w-100">
                                         <span class="text">Youtube Video Link 2</span>
                                         <input type="url" class="form-control" name="videoAttach2"
-                                            placeholder="Enter video URL" value="<?= $data['video_attach_2']; ?>"
+                                            placeholder="Enter video URL" value="<?= htmlspecialchars($data['video_attach_2'] ?? ''); ?>"
                                             pattern="https?://.+"
                                             title="Please enter a valid URL starting with http:// or https://"
                                             data-constraints="@Required" accept="video/mp4" />
@@ -209,7 +211,7 @@ if (isset($_SESSION['user_id'])) {
                                 <div class="col-md-6"><label class="videoAttach_title2 w-100">
                                         <span class="text">Youtube Video Attachments Title 2</span>
                                         <input type="text" class="form-control" name="videoAttach_title2"
-                                            placeholder="Enter video title" value="<?= $data['video_attach_title2']; ?>"
+                                            placeholder="Enter video title" value="<?= htmlspecialchars($data['video_attach_title2'] ?? ''); ?>"
                                             data-constraints="@Required" />
                                     </label>
                                 </div>
@@ -222,14 +224,14 @@ if (isset($_SESSION['user_id'])) {
                                         <input type="url" class="form-control" name="videoAttach3"
                                             placeholder="Enter video URL" pattern="https?://.+"
                                             title="Please enter a valid URL starting with http:// or https://"
-                                            value="<?= $data['video_attach_3']; ?>" data-constraints="@Required" />
+                                            value="<?= htmlspecialchars($data['video_attach_3'] ?? ''); ?>" data-constraints="@Required" />
                                     </label>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="videoAttach_title3 w-100">
                                         <span class="text">Youtube Video Attachments Title 3</span>
                                         <input type="text" class="form-control" name="videoAttach_title3"
-                                            placeholder="Enter video title" value="<?= $data['video_attach_title3']; ?>"
+                                            placeholder="Enter video title" value="<?= htmlspecialchars($data['video_attach_title3'] ?? ''); ?>"
                                             data-constraints="@Required" />
                                     </label>
                                 </div>
@@ -241,7 +243,7 @@ if (isset($_SESSION['user_id'])) {
                                         <input type="url" class="form-control" name="videoAttach4"
                                             placeholder="Enter video URL" pattern="https?://.+"
                                             title="Please enter a valid URL starting with http:// or https://"
-                                            value="<?= $data['video_attach_4']; ?>" data-constraints="@Required" />
+                                            value="<?= htmlspecialchars($data['video_attach_4'] ?? ''); ?>" data-constraints="@Required" />
                                     </label>
                                 </div>
 
@@ -249,7 +251,7 @@ if (isset($_SESSION['user_id'])) {
                                     <label class="videoAttach_title4 w-100">
                                         <span class="text">Youtube Video Attachments Title 4</span>
                                         <input type="text" class="form-control" name="videoAttach_title4"
-                                            placeholder="Enter video title" value="<?= $data['video_attach_title4']; ?>"
+                                            placeholder="Enter video title" value="<?= htmlspecialchars($data['video_attach_title4'] ?? ''); ?>"
                                             data-constraints="@Required" />
                                     </label>
                                 </div>
