@@ -18,107 +18,7 @@
         error_log("Table error: " . $e->getMessage());
     }
 ?>
-<style>
-    .page-title {
-        border-left: 5px solid #0d6efd;
-        padding-left: 15px;
-    }
-
-    .table thead th {
-        white-space: nowrap;
-    }
-
-    .badge {
-        font-size: 0.85rem;
-    }
-
-    .btn-sm {
-        min-width: 110px;
-    }
-    
-    .loading-spinner {
-        text-align: center;
-        padding: 50px;
-    }
-    
-    .loading-spinner i {
-        font-size: 3rem;
-        color: #0d6efd;
-        margin-bottom: 15px;
-        animation: spin 1s linear infinite;
-    }
-    
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-    
-    .no-data {
-        text-align: center;
-        padding: 50px;
-    }
-    
-    .no-data i {
-        font-size: 3rem;
-        color: #999;
-        margin-bottom: 15px;
-    }
-    
-    .corrigendum-row {
-        transition: background-color 0.3s;
-    }
-    
-    .corrigendum-row:hover {
-        background-color: #f8f9fa;
-    }
-    
-    .filter-buttons {
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-        margin-top: 15px;
-    }
-    
-    .notice-card {
-        background: #fff8e7;
-        border-left: 4px solid #ffc107;
-        padding: 10px 15px;
-        border-radius: 8px;
-        margin-bottom: 10px;
-    }
-    
-    .notice-title {
-        font-size: 14px;
-        font-weight: 600;
-        color: #856404;
-    }
-    
-    .document-buttons {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-    }
-    
-    .corrigendum-badge {
-        background: #ffc107;
-        color: #856404;
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-size: 11px;
-        font-weight: 600;
-        display: inline-block;
-    }
-    
-    @media (max-width: 768px) {
-        .table {
-            font-size: 12px;
-        }
-        .btn-sm {
-            font-size: 11px;
-            padding: 4px 8px;
-        }
-    }
-</style>
+<link rel="stylesheet" href="assets/css/tenders.css">
 
 <section class="tvnl-banner">
     <img src="assets/images/banner/board-banner.jpg" alt="Corrigendum Notices" class="banner-img img-fluid">
@@ -137,42 +37,50 @@
         </h3>
     </div>
 
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <div class="row g-3 align-items-end">
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Financial Year</label>
-                    <select class="form-select" id="financial_year">
-                        <option value="">All Years</option>
-                        <?php if(!empty($available_years)): ?>
-                            <?php foreach($available_years as $year_data): ?>
-                                <option value="<?php echo $year_data['year']; ?>">
-                                    <?php echo $year_data['year']; ?>
-                                </option>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </select>
-                </div>
+    <div class="filter-card theme-corrigendum mb-4">
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="filter-icon-wrapper">
+                <i class="bi bi-funnel-fill"></i>
+            </div>
+            <div>
+                <h6 class="filter-card-title mb-0">Search Corrigendum Archive</h6>
+                <small class="text-muted">Filter archived corrigendum notices by financial year or specific date range</small>
+            </div>
+        </div>
+        
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label fw-semibold text-secondary small">Financial Year</label>
+                <select class="form-select" id="financial_year">
+                    <option value="">All Years</option>
+                    <?php if(!empty($available_years)): ?>
+                        <?php foreach($available_years as $year_data): ?>
+                            <option value="<?php echo $year_data['year']; ?>">
+                                <?php echo $year_data['year']; ?>
+                            </option>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </select>
+            </div>
 
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Start Date</label>
-                    <input type="date" class="form-control" id="start_date">
-                </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold text-secondary small">Start Date</label>
+                <input type="date" class="form-control" id="start_date">
+            </div>
 
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">End Date</label>
-                    <input type="date" class="form-control" id="end_date">
-                </div>
-                
-                <div class="col-md-12">
-                    <div class="filter-buttons">
-                        <button class="btn btn-primary" id="apply_filters">
-                            <i class="bi bi-search"></i> Apply Filters
-                        </button>
-                        <button class="btn btn-secondary" id="reset_filters">
-                            <i class="bi bi-arrow-repeat"></i> Reset
-                        </button>
-                    </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold text-secondary small">End Date</label>
+                <input type="date" class="form-control" id="end_date">
+            </div>
+            
+            <div class="col-md-12">
+                <div class="filter-buttons">
+                    <button class="btn btn-primary" id="apply_filters">
+                        <i class="bi bi-search"></i> Apply Filters
+                    </button>
+                    <button class="btn btn-secondary" id="reset_filters">
+                        <i class="bi bi-arrow-repeat"></i> Reset
+                    </button>
                 </div>
             </div>
         </div>

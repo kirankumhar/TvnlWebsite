@@ -215,7 +215,7 @@ $tenders = $pdo->query("SELECT id, tender_number, title, closing_date FROM tende
                     <?php if ($extension['pdf_path']): ?>
                     <div class="current-pdf">
                         <i class="bi bi-file-pdf-fill text-danger"></i> <strong>Current PDF:</strong>
-                        <a href="<?= htmlspecialchars($extension['pdf_path']) ?>" target="_blank" class="ms-2">
+                        <a href="<?= $base_url . '/cd-admin/src/' . ltrim($extension['pdf_path'], '/'); ?>" target="_blank" class="ms-2">
                             <?= basename($extension['pdf_path']) ?>
                         </a>
                     </div>

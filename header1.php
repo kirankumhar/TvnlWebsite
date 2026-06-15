@@ -243,7 +243,7 @@
 
                                             <li class="dropdown"><a href="#" title="Tenders and Notices">Tenders</a>
                                                 <ul>
-                                                    <li><a href="tender_notice.php" title="Tender Notices">Tender Notices</a></li>
+                                                    <li><a href="tender-notices.php" title="Tender Notices">Tender Notices</a></li>
                                                     <li><a href="extension-notices.php" title="Extension Notices">Extension
                                                             Notices</a></li>
                                                     <li><a href="corrigendum.php" title="Corrigendum">Corrigendum</a>

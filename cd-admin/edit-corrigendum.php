@@ -166,7 +166,7 @@ $tenders = $pdo->query("SELECT id, tender_number, title FROM tender_notice WHERE
                     <?php if ($corrigendum['pdf_path']): ?>
                     <div class="current-pdf">
                         <i class="bi bi-file-pdf-fill text-danger"></i> <strong>Current PDF:</strong>
-                        <a href="<?= htmlspecialchars($corrigendum['pdf_path']) ?>" target="_blank" class="ms-2">
+                        <a href="<?= $base_url . '/cd-admin/src/' . ltrim($corrigendum['pdf_path'], '/'); ?>" target="_blank" class="ms-2">
                             <?= basename($corrigendum['pdf_path']) ?>
                         </a>
                     </div>

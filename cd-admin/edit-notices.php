@@ -193,7 +193,7 @@ if (isset($_SESSION['user_id'])) {
 
                                 </div>
                                 <div class="modal fade" id="docmodal" tabindex="-1" aria-labelledby="docmodalLabel"
-                                    aria-hidden="true">
+                                    aria-hidden="true" data-bs-focus="false">
                                     <div class="modal-dialog modal-xl">
                                         <div class="modal-content">
                                             <div class="modal-header">
@@ -202,8 +202,8 @@ if (isset($_SESSION['user_id'])) {
                                                     aria-label="Close"></button>
                                             </div>
                                             <div class="modal-body">
-                                                <embed src="<?= $base_url . '/src/' . $data['notice_path']; ?>" height="500"
-                                                    width="1000px">
+                                                <embed src="<?= $base_url . '/src/' . ltrim($data['notice_path'], '/'); ?>" height="500"
+                                                    width="100%">
 
                                             </div>
                                             <div class="modal-footer">
@@ -278,28 +278,28 @@ if (isset($_SESSION['user_id'])) {
                                         noticeFileWrapper.style.display = 'none';
                                         noticeFilePreview.style.display = 'none';
 
-                                        attachNoticeURL.required = true;
+                                        URLInput.required = true;
                                         FileInput.required = false;
                                     } else if (notice_type.value === 'F') {
                                         noticeURLWrapper.style.display = 'none';
                                         noticeFileWrapper.style.display = 'block';
                                         noticeFilePreview.style.display = 'block';
 
-                                        attachNoticeURL.required = false;
+                                        URLInput.required = false;
                                         FileInput.required = true;
                                     } else if (notice_type.value === 'Both') {
                                         noticeURLWrapper.style.display = 'block';
                                         noticeFileWrapper.style.display = 'block';
                                         noticeFilePreview.style.display = 'block';
 
-                                        attachNoticeURL.required = true;
+                                        URLInput.required = true;
                                         FileInput.required = true;
                                     } else {
                                         noticeURLWrapper.style.display = 'none';
                                         noticeFileWrapper.style.display = 'none';
                                         noticeFilePreview.style.display = 'none';
 
-                                        attachNoticeURL.required = false;
+                                        URLInput.required = false;
                                         FileInput.required = false;
                                     }
 

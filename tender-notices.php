@@ -16,8 +16,35 @@
         $available_years = [];
         error_log("Table error: " . $e->getMessage());
     }
+
+    // Fetch tenders based on year filter
+    try {
+        $selected_year = isset($_GET['year']) && !empty($_GET['year']) ? $_GET['year'] : null;
+        
+        if ($selected_year) {
+            $query = "SELECT * FROM tender_notice 
+                     WHERE YEAR(publish_date) = ? 
+                     AND status = 'Published' 
+                     AND is_deleted = 0 
+                     ORDER BY publish_date DESC, closing_date ASC";
+            $stmt = $conn->prepare($query);
+            $stmt->execute([$selected_year]);
+        } else {
+            $query = "SELECT * FROM tender_notice 
+                     WHERE status = 'Published' 
+                     AND is_deleted = 0 
+                     ORDER BY publish_date DESC, closing_date ASC";
+            $stmt = $conn->prepare($query);
+            $stmt->execute();
+        }
+        $tenders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        $tenders = [];
+        error_log("Tender error: " . $e->getMessage());
+    }
 ?>
 <?php include "header1.php"; ?>
+<link rel="stylesheet" href="assets/css/tenders.css">
 
 <section class="tvnl-banner">
     <img src="assets/images/banner/board-banner.jpg" alt="Tender Notices" class="banner-img img-fluid">
@@ -29,36 +56,54 @@
 </section>
 
 <div class="container my-5">
-    <div class="mb-4 page-title">
+    <div class="mb-4 page-title title-row">
         <h3 class="fw-bold text-primary mb-0">
-            <i class="bi bi-table"></i> Tender Notices List
+            <i class="bi bi-file-earmark-text" title="Tender Notices"></i> Tender Notices
         </h3>
+        <div>
+            <a href="tender-old.php" class="btn archive-btn">
+                <i class="bi bi-archive"></i> Archive Tender Notices
+            </a>
+        </div>
     </div>
 
-    <!-- Year Filter -->
-    <div class="row justify-content-between mb-4">
-        <div class="col-lg-3 col-md-4 col-sm-6">
-            <form method="GET" action="" id="filterForm">
-                <div class="input-group">
-                    <label for="yearFilter" class="input-group-text bg-primary text-white">
-                        <i class="bi bi-calendar-event"></i> Filter by Year
-                    </label>
-                    <select name="year" id="yearFilter" class="form-select" onchange="this.form.submit()">
-                        <option value="">All Years</option>
-                        <?php
-                        if (!empty($available_years)) {
-                            foreach ($available_years as $year_item) {
-                                $selected = (isset($_GET['year']) && $_GET['year'] == $year_item['year']) ? 'selected' : '';
-                                echo '<option value="' . htmlspecialchars($year_item['year']) . '" ' . $selected . '>' . htmlspecialchars($year_item['year']) . '</option>';
-                            }
-                        }
-                        ?>
-                    </select>
+    <!-- Year Filter Card -->
+    <div class="filter-card theme-tender mb-4">
+        <div class="filter-card-body d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="filter-icon-wrapper">
+                    <i class="bi bi-funnel-fill"></i>
                 </div>
-            </form>
-        </div>
-        <div class="col-lg-3 col-md-4 col-sm-6 text-end">
-            <span class="text-muted" id="recordCount"></span>
+                <div>
+                    <h6 class="filter-card-title mb-0">Filter Tenders</h6>
+                    <small class="text-muted">Select a year to display corresponding tender notices</small>
+                </div>
+            </div>
+            
+            <div class="d-flex align-items-center gap-3 flex-wrap flex-sm-nowrap w-100-mobile">
+                <form method="GET" action="" id="filterForm" class="m-0">
+                    <div class="custom-select-wrapper">
+                        <i class="bi bi-calendar-event select-icon"></i>
+                        <select name="year" id="yearFilter" class="custom-filter-select" onchange="this.form.submit()">
+                            <option value="" <?= empty($selected_year) ? 'selected' : '' ?>>All Years</option>
+                            <?php
+                            if (!empty($available_years)) {
+                                foreach ($available_years as $year_item) {
+                                    $selected = ($selected_year == $year_item['year']) ? 'selected' : '';
+                                    echo '<option value="' . htmlspecialchars($year_item['year']) . '" ' . $selected . '>' . htmlspecialchars($year_item['year']) . '</option>';
+                                }
+                            }
+                            ?>
+                        </select>
+                    </div>
+                </form>
+                
+                <div class="record-badge">
+                    <span class="badge border bg-light text-dark">
+                        <i class="bi bi-database"></i> Total Tenders: <strong><?php echo count($tenders); ?></strong>
+                    </span>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -77,32 +122,6 @@
             </thead>
             <tbody>
                 <?php
-                try {
-                    // Build query based on year filter
-                    $selected_year = isset($_GET['year']) && !empty($_GET['year']) ? $_GET['year'] : null;
-                    
-                    if ($selected_year) {
-                        $query = "SELECT * FROM tender_notice 
-                                 WHERE YEAR(publish_date) = ? 
-                                 AND status = 'Published' 
-                                 AND is_deleted = 0 
-                                 ORDER BY publish_date DESC, closing_date ASC";
-                        $stmt = $conn->prepare($query);
-                        $stmt->execute([$selected_year]);
-                    } else {
-                        $query = "SELECT * FROM tender_notice 
-                                 WHERE status = 'Published' 
-                                 AND is_deleted = 0 
-                                 ORDER BY publish_date DESC, closing_date ASC";
-                        $stmt = $conn->prepare($query);
-                        $stmt->execute();
-                    }
-                    $tenders = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                } catch (PDOException $e) {
-                    $tenders = [];
-                    error_log("Tender error: " . $e->getMessage());
-                }
-
                 if (count($tenders) > 0) {
                     $serial_no = 1;
                     foreach ($tenders as $tender) {
@@ -307,48 +326,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<style>
-    /* Custom styles for the table */
-    .table th {
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.85rem;
-        letter-spacing: 0.5px;
-    }
-    
-    .table td {
-        vertical-align: middle;
-        font-size: 0.9rem;
-    }
-    
-    .table-hover tbody tr:hover {
-        background-color: rgba(13, 110, 253, 0.05);
-        transition: background-color 0.3s ease;
-    }
-    
-    .btn-group .btn {
-        margin: 0 2px;
-        border-radius: 4px !important;
-    }
-    
-    .table-responsive {
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-    
-    #tenderTable {
-        margin-bottom: 0;
-    }
-    
-    .modal-content {
-        border-radius: 12px;
-    }
-    
-    .modal-header {
-        border-radius: 12px 12px 0 0;
-    }
-</style>
 
 <?php include("footer_top.php"); ?>
 <?php include "footer1.php"; ?>

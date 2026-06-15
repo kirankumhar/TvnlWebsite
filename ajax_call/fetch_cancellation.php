@@ -57,7 +57,7 @@ try {
               FROM tbl_cancellation_notice c 
               LEFT JOIN tbl_tender_details t ON c.ten_id = t.ten_id 
               $where_clause 
-              ORDER BY c.cancel_id DESC 
+              ORDER BY c.cancell_id DESC 
               LIMIT :offset, :results_per_page";
     
     $stmt = $conn->prepare($query);

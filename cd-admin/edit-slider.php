@@ -172,14 +172,11 @@ function getDisplayImageUrl($imagePath) {
                         <label class="form-label">Current Image</label>
                         <div class="current-image">
                             <?php if ($slider['image_path']): 
-                                // Fix: Get displayable image URL by removing 'cd-admin/src' prefix
-                                $displayImageUrl = getDisplayImageUrl($slider['image_path']);
                             ?>
-                                <img src="<?= $base_url ?>/src<?= htmlspecialchars($displayImageUrl) ?>" alt="Current Slider Image">
+                                <img src="<?= $base_url ?>/cd-admin/src/<?= htmlspecialchars($slider['image_path']) ?>" alt="Current Slider Image">
                                 <div class="image-info mt-2">
                                     <i class="bi bi-info-circle"></i> 
                                     <strong>Stored path:</strong> <?= htmlspecialchars($slider['image_path']) ?><br>
-                                    <strong>Display path:</strong> <?= htmlspecialchars($displayImageUrl) ?>
                                 </div>
                             <?php else: ?>
                                 <p class="text-muted mb-0">No image uploaded</p>

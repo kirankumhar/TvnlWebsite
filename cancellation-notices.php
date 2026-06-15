@@ -5,9 +5,11 @@
 
     // Get distinct years for filter from cancellation_date
     try {
-        $query = "SELECT DISTINCT YEAR(cancellation_date) as year 
-                FROM tender_cancellation 
-                WHERE cancellation_date IS NOT NULL 
+        $query = "SELECT DISTINCT YEAR(c.cancellation_date) as year 
+                FROM tender_cancellation c
+                JOIN tender_notice t ON c.tender_id = t.id
+                WHERE c.cancellation_date IS NOT NULL 
+                AND t.is_deleted = 0 AND t.status = 'Published'
                 ORDER BY year DESC";
         $stmt = $conn->prepare($query);
         $stmt->execute();
@@ -16,8 +18,37 @@
         $available_years = [];
         error_log("Table error: " . $e->getMessage());
     }
+
+    // Fetch cancellations based on year filter
+    try {
+        $selected_year = isset($_GET['year']) && !empty($_GET['year']) ? $_GET['year'] : null;
+        
+        if ($selected_year) {
+            $query = "SELECT c.*, t.tender_number, t.title as tender_title, t.reference_number,
+                             t.publish_date, t.closing_date
+                     FROM tender_cancellation c
+                     LEFT JOIN tender_notice t ON c.tender_id = t.id
+                     WHERE YEAR(c.cancellation_date) = ? 
+                     ORDER BY c.cancellation_date DESC, c.id DESC";
+            $stmt = $conn->prepare($query);
+            $stmt->execute([$selected_year]);
+        } else {
+            $query = "SELECT c.*, t.tender_number, t.title as tender_title, t.reference_number,
+                             t.publish_date, t.closing_date
+                     FROM tender_cancellation c
+                     LEFT JOIN tender_notice t ON c.tender_id = t.id
+                     ORDER BY c.cancellation_date DESC, c.id DESC";
+            $stmt = $conn->prepare($query);
+            $stmt->execute();
+        }
+        $cancellations = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        $cancellations = [];
+        error_log("Cancellation error: " . $e->getMessage());
+    }
 ?>
 <?php include "header1.php"; ?>
+<link rel="stylesheet" href="assets/css/tenders.css">
 
 <section class="tvnl-banner">
     <img src="assets/images/banner/board-banner.jpg" alt="Tenders - Cancellation Notices" title="Tenders - Cancellation Notices"
@@ -30,36 +61,54 @@
 </section>
 
 <div class="container my-5">
-    <div class="mb-4 page-title">
+    <div class="mb-4 page-title title-row">
         <h3 class="fw-bold text-primary mb-0">
-            <i class="bi bi-x-octagon"></i> Tender Cancellation Notices
+            <i class="bi bi-file-earmark-text" title="Tender Notices"></i> Cancellation Notices
         </h3>
+        <div>
+            <a href="cancellation-old.php" class="btn archive-btn">
+                <i class="bi bi-archive"></i> Archive Cancellation Notices
+            </a>
+        </div>
     </div>
 
-    <!-- Year Filter -->
-    <div class="row justify-content-between mb-4">
-        <div class="col-lg-3 col-md-4 col-sm-6">
-            <form method="GET" action="" id="filterForm">
-                <div class="input-group">
-                    <label for="yearFilter" class="input-group-text bg-primary text-white">
-                        <i class="bi bi-calendar-event"></i> Filter by Year
-                    </label>
-                    <select name="year" id="yearFilter" class="form-select" onchange="this.form.submit()">
-                        <option value="">All Years</option>
-                        <?php
-                        if (!empty($available_years)) {
-                            foreach ($available_years as $year_item) {
-                                $selected = (isset($_GET['year']) && $_GET['year'] == $year_item['year']) ? 'selected' : '';
-                                echo '<option value="' . htmlspecialchars($year_item['year']) . '" ' . $selected . '>' . htmlspecialchars($year_item['year']) . '</option>';
-                            }
-                        }
-                        ?>
-                    </select>
+    <!-- Year Filter Card -->
+    <div class="filter-card theme-cancellation mb-4">
+        <div class="filter-card-body d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="filter-icon-wrapper">
+                    <i class="bi bi-funnel-fill"></i>
                 </div>
-            </form>
-        </div>
-        <div class="col-lg-3 col-md-4 col-sm-6 text-end">
-            <span class="text-muted" id="recordCount"></span>
+                <div>
+                    <h6 class="filter-card-title mb-0">Filter Cancellation Notices</h6>
+                    <small class="text-muted">Select a year to display corresponding cancellation notices</small>
+                </div>
+            </div>
+            
+            <div class="d-flex align-items-center gap-3 flex-wrap flex-sm-nowrap w-100-mobile">
+                <form method="GET" action="" id="filterForm" class="m-0">
+                    <div class="custom-select-wrapper">
+                        <i class="bi bi-calendar-event select-icon"></i>
+                        <select name="year" id="yearFilter" class="custom-filter-select" onchange="this.form.submit()">
+                            <option value="" <?= empty($selected_year) ? 'selected' : '' ?>>All Years</option>
+                            <?php
+                            if (!empty($available_years)) {
+                                foreach ($available_years as $year_item) {
+                                    $selected = ($selected_year == $year_item['year']) ? 'selected' : '';
+                                    echo '<option value="' . htmlspecialchars($year_item['year']) . '" ' . $selected . '>' . htmlspecialchars($year_item['year']) . '</option>';
+                                }
+                            }
+                            ?>
+                        </select>
+                    </div>
+                </form>
+                
+                <div class="record-badge">
+                    <span class="badge border bg-light text-dark">
+                        <i class="bi bi-database"></i> Total Records: <strong><?php echo count($cancellations); ?></strong>
+                    </span>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -78,34 +127,6 @@
             </thead>
             <tbody>
                 <?php
-                try {
-                    // Build query based on year filter
-                    $selected_year = isset($_GET['year']) && !empty($_GET['year']) ? $_GET['year'] : null;
-                    
-                    if ($selected_year) {
-                        $query = "SELECT c.*, t.tender_number, t.title as tender_title, t.reference_number,
-                                         t.publish_date, t.closing_date
-                                 FROM tender_cancellation c
-                                 LEFT JOIN tender_notice t ON c.tender_id = t.id
-                                 WHERE YEAR(c.cancellation_date) = ? 
-                                 ORDER BY c.cancellation_date DESC, c.id DESC";
-                        $stmt = $conn->prepare($query);
-                        $stmt->execute([$selected_year]);
-                    } else {
-                        $query = "SELECT c.*, t.tender_number, t.title as tender_title, t.reference_number,
-                                         t.publish_date, t.closing_date
-                                 FROM tender_cancellation c
-                                 LEFT JOIN tender_notice t ON c.tender_id = t.id
-                                 ORDER BY c.cancellation_date DESC, c.id DESC";
-                        $stmt = $conn->prepare($query);
-                        $stmt->execute();
-                    }
-                    $cancellations = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                } catch (PDOException $e) {
-                    $cancellations = [];
-                    error_log("Cancellation error: " . $e->getMessage());
-                }
-
                 if (count($cancellations) > 0) {
                     $serial_no = 1;
                     foreach ($cancellations as $cancellation) {
@@ -329,16 +350,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Update record count
-document.addEventListener('DOMContentLoaded', function() {
-    var tableRows = document.querySelectorAll('#cancellationTable tbody tr');
-    var visibleRows = Array.from(tableRows).filter(row => row.style.display !== 'none');
-    var recordCountSpan = document.getElementById('recordCount');
-    if (recordCountSpan) {
-        var count = visibleRows.length;
-        recordCountSpan.innerHTML = '<i class="bi bi-database"></i> Total: ' + count + ' record(s)';
-    }
-});
+
 
 // Search functionality (optional)
 function searchCancellations() {
@@ -362,105 +374,6 @@ function searchCancellations() {
     }
 }
 </script>
-
-<style>
-    /* Custom styles */
-    .table th {
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.85rem;
-        letter-spacing: 0.5px;
-    }
-    
-    .table td {
-        vertical-align: middle;
-        font-size: 0.9rem;
-    }
-    
-    .table-hover tbody tr:hover {
-        background-color: rgba(220, 53, 69, 0.05);
-        transition: background-color 0.3s ease;
-    }
-    
-    .btn-group .btn {
-        margin: 0 2px;
-        border-radius: 4px !important;
-    }
-    
-    .table-responsive {
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-    
-    #cancellationTable {
-        margin-bottom: 0;
-    }
-    
-    .modal-content {
-        border-radius: 12px;
-    }
-    
-    .badge {
-        padding: 5px 10px;
-        font-weight: 500;
-    }
-    
-    /* Recent badge animation */
-    .text-danger small i {
-        animation: blink 1s infinite;
-    }
-    
-    @keyframes blink {
-        0% { opacity: 1; }
-        50% { opacity: 0.5; }
-        100% { opacity: 1; }
-    }
-    
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-        .table-responsive {
-            font-size: 0.85rem;
-        }
-        
-        .btn-group .btn {
-            padding: 0.2rem 0.4rem;
-        }
-        
-        .badge {
-            font-size: 0.7rem;
-        }
-    }
-    
-    /* Print styles */
-    @media print {
-        .tvnl-banner,
-        .btn-group,
-        .modal,
-        .input-group {
-            display: none !important;
-        }
-        
-        .table-responsive {
-            overflow: visible !important;
-        }
-        
-        .table {
-            width: 100% !important;
-        }
-        
-        .badge {
-            border: 1px solid #000;
-            background: none !important;
-            color: #000 !important;
-        }
-    }
-    
-    /* Strikethrough effect for cancelled tenders */
-    .text-danger {
-        text-decoration: none;
-    }
-</style>
 
 <?php include("footer_top.php"); ?>
 <?php include "footer1.php"; ?>

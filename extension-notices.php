@@ -5,9 +5,11 @@
 
     // Get distinct years for filter from extension_date
     try {
-        $query = "SELECT DISTINCT YEAR(extension_date) as year 
-                FROM tender_extension 
-                WHERE extension_date IS NOT NULL 
+        $query = "SELECT DISTINCT YEAR(e.extension_date) as year 
+                FROM tender_extension e
+                JOIN tender_notice t ON e.tender_id = t.id
+                WHERE e.extension_date IS NOT NULL 
+                AND t.is_deleted = 0 AND t.status = 'Published'
                 ORDER BY year DESC";
         $stmt = $conn->prepare($query);
         $stmt->execute();
@@ -16,8 +18,35 @@
         $available_years = [];
         error_log("Table error: " . $e->getMessage());
     }
+
+    // Fetch extensions based on year filter
+    try {
+        $selected_year = isset($_GET['year']) && !empty($_GET['year']) ? $_GET['year'] : null;
+        
+        if ($selected_year) {
+            $query = "SELECT e.*, t.tender_number, t.title as tender_title, t.closing_date as original_closing_date 
+                     FROM tender_extension e
+                     LEFT JOIN tender_notice t ON e.tender_id = t.id
+                     WHERE YEAR(e.extension_date) = ? 
+                     ORDER BY e.extension_date DESC, e.id DESC";
+            $stmt = $conn->prepare($query);
+            $stmt->execute([$selected_year]);
+        } else {
+            $query = "SELECT e.*, t.tender_number, t.title as tender_title, t.closing_date as original_closing_date 
+                     FROM tender_extension e
+                     LEFT JOIN tender_notice t ON e.tender_id = t.id
+                     ORDER BY e.extension_date DESC, e.id DESC";
+            $stmt = $conn->prepare($query);
+            $stmt->execute();
+        }
+        $extensions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        $extensions = [];
+        error_log("Extension error: " . $e->getMessage());
+    }
 ?>
 <?php include "header1.php"; ?>
+<link rel="stylesheet" href="assets/css/tenders.css">
 
 <section class="tvnl-banner">
     <img src="assets/images/banner/board-banner.jpg" alt="Tenders - Extension Notices" title="Tenders - Extension Notices"
@@ -30,36 +59,54 @@
 </section>
 
 <div class="container my-5">
-    <div class="mb-4 page-title">
+    <div class="mb-4 page-title title-row">
         <h3 class="fw-bold text-primary mb-0">
-            <i class="bi bi-clock-history"></i> Tender Extension Notices
+            <i class="bi bi-file-earmark-text" title="Tender Notices"></i>Extension Notices
         </h3>
+        <div>
+            <a href="extension-old.php" class="btn archive-btn">
+                <i class="bi bi-archive"></i> Archive Extension Notices
+            </a>
+        </div>
     </div>
 
-    <!-- Year Filter -->
-    <div class="row justify-content-between mb-4">
-        <div class="col-lg-3 col-md-4 col-sm-6">
-            <form method="GET" action="" id="filterForm">
-                <div class="input-group">
-                    <label for="yearFilter" class="input-group-text bg-primary text-white">
-                        <i class="bi bi-calendar-event"></i> Filter by Year
-                    </label>
-                    <select name="year" id="yearFilter" class="form-select" onchange="this.form.submit()">
-                        <option value="">All Years</option>
-                        <?php
-                        if (!empty($available_years)) {
-                            foreach ($available_years as $year_item) {
-                                $selected = (isset($_GET['year']) && $_GET['year'] == $year_item['year']) ? 'selected' : '';
-                                echo '<option value="' . htmlspecialchars($year_item['year']) . '" ' . $selected . '>' . htmlspecialchars($year_item['year']) . '</option>';
-                            }
-                        }
-                        ?>
-                    </select>
+    <!-- Year Filter Card -->
+    <div class="filter-card theme-extension mb-4">
+        <div class="filter-card-body d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="filter-icon-wrapper">
+                    <i class="bi bi-funnel-fill"></i>
                 </div>
-            </form>
-        </div>
-        <div class="col-lg-3 col-md-4 col-sm-6 text-end">
-            <span class="text-muted" id="recordCount"></span>
+                <div>
+                    <h6 class="filter-card-title mb-0">Filter Extension Notices</h6>
+                    <small class="text-muted">Select a year to display corresponding extension notices</small>
+                </div>
+            </div>
+            
+            <div class="d-flex align-items-center gap-3 flex-wrap flex-sm-nowrap w-100-mobile">
+                <form method="GET" action="" id="filterForm" class="m-0">
+                    <div class="custom-select-wrapper">
+                        <i class="bi bi-calendar-event select-icon"></i>
+                        <select name="year" id="yearFilter" class="custom-filter-select" onchange="this.form.submit()">
+                            <option value="" <?= empty($selected_year) ? 'selected' : '' ?>>All Years</option>
+                            <?php
+                            if (!empty($available_years)) {
+                                foreach ($available_years as $year_item) {
+                                    $selected = ($selected_year == $year_item['year']) ? 'selected' : '';
+                                    echo '<option value="' . htmlspecialchars($year_item['year']) . '" ' . $selected . '>' . htmlspecialchars($year_item['year']) . '</option>';
+                                }
+                            }
+                            ?>
+                        </select>
+                    </div>
+                </form>
+                
+                <div class="record-badge">
+                    <span class="badge border bg-light text-dark">
+                        <i class="bi bi-database"></i> Total Records: <strong><?php echo count($extensions); ?></strong>
+                    </span>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -79,32 +126,6 @@
             </thead>
             <tbody>
                 <?php
-                try {
-                    // Build query based on year filter
-                    $selected_year = isset($_GET['year']) && !empty($_GET['year']) ? $_GET['year'] : null;
-                    
-                    if ($selected_year) {
-                        $query = "SELECT e.*, t.tender_number, t.title as tender_title, t.closing_date as original_closing_date 
-                                 FROM tender_extension e
-                                 LEFT JOIN tender_notice t ON e.tender_id = t.id
-                                 WHERE YEAR(e.extension_date) = ? 
-                                 ORDER BY e.extension_date DESC, e.id DESC";
-                        $stmt = $conn->prepare($query);
-                        $stmt->execute([$selected_year]);
-                    } else {
-                        $query = "SELECT e.*, t.tender_number, t.title as tender_title, t.closing_date as original_closing_date 
-                                 FROM tender_extension e
-                                 LEFT JOIN tender_notice t ON e.tender_id = t.id
-                                 ORDER BY e.extension_date DESC, e.id DESC";
-                        $stmt = $conn->prepare($query);
-                        $stmt->execute();
-                    }
-                    $extensions = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                } catch (PDOException $e) {
-                    $extensions = [];
-                    error_log("Extension error: " . $e->getMessage());
-                }
-
                 if (count($extensions) > 0) {
                     $serial_no = 1;
                     foreach ($extensions as $extension) {
@@ -335,16 +356,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Update record count
-document.addEventListener('DOMContentLoaded', function() {
-    var tableRows = document.querySelectorAll('#extensionTable tbody tr');
-    var visibleRows = Array.from(tableRows).filter(row => row.style.display !== 'none');
-    var recordCountSpan = document.getElementById('recordCount');
-    if (recordCountSpan) {
-        var count = visibleRows.length;
-        recordCountSpan.innerHTML = '<i class="bi bi-database"></i> Total: ' + count + ' record(s)';
-    }
-});
+
 </script>
 
 <style>

@@ -148,7 +148,7 @@ if (isset($_SESSION['user_id'])) {
                                 accept="image/png, image/gif, image/jpg, image/jpeg" <?= $data['news_pic1'] ? '' : 'required'; ?>>
                             <div id="previewImage1" class="mt-2">
                                 <img style="height: 150px;" class="preview-image" title="title-img"
-                                    src="<?= $base_url ?>/src/<?= $data['news_pic1']; ?>">
+                                    src="<?= $base_url ?>/cd-admin/src/<?= $data['news_pic1']; ?>">
                             </div>
                             <?php if (isset($err['picture1'])) { ?>
                                 <div class="form-text text-danger"><?php echo $err['picture1']; ?></div>

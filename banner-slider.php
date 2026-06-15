@@ -3,15 +3,10 @@
 function getBaseUrl() {
     $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
     $host = $_SERVER['HTTP_HOST'];
-    
     $script_path = dirname($_SERVER['SCRIPT_NAME']);
-    
     $script_path = rtrim($script_path, '/');
-
     $base_path = $script_path;
-
     $base_path = str_replace('/cd-admin', '', $base_path);
-    
     return $protocol . $host . $base_path;
 }
 
@@ -22,7 +17,6 @@ $base_url = getBaseUrl();
     <div class="slider-wrapper">
         <div class="slider-carousel owl-carousel" aria-live="polite">
             <?php
-            // Fetch sliders from database
             require_once __DIR__ . '/cd-admin/src/database/Database.php';
             
             $database = new Database();
@@ -57,8 +51,6 @@ $base_url = getBaseUrl();
                     title="<?= $slideSubtitle ?>" loading="lazy" width="100%" height="auto">
             </div>
             <?php endforeach; ?>
-
-
         </div>
     </div>
 </section>

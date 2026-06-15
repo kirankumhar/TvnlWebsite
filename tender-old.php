@@ -24,55 +24,7 @@
         $available_years = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 ?>
-<style>
-    .page-title { border-left: 5px solid #0d6efd; padding-left: 15px; }
-    .table thead th { white-space: nowrap; }
-    .badge { font-size: 0.85rem; }
-    .btn-sm { min-width: 110px; }
-    .loading-spinner { text-align: center; padding: 50px; }
-    .loading-spinner i {
-        font-size: 3rem;
-        color: #0d6efd;
-        margin-bottom: 15px;
-    }
-    
-    .no-tenders {
-        text-align: center;
-        padding: 50px;
-    }
-    
-    .no-tenders i {
-        font-size: 3rem;
-        color: #999;
-        margin-bottom: 15px;
-    }
-    
-    .tender-row {
-        transition: background-color 0.3s;
-    }
-    
-    .tender-row:hover {
-        background-color: #f8f9fa;
-    }
-    
-    .filter-buttons {
-        display: flex;
-        gap: 10px;
-        margin-top: 15px;
-    }
-    .filter-buttons {
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-        margin-top: 15px;
-    }
-    
-    @media (min-width: 768px) {
-        .filter-buttons {
-            margin-top: 32px;
-        }
-    }
-</style>
+<link rel="stylesheet" href="assets/css/tenders.css">
 
 <section class="tvnl-banner">
     <img src="assets/images/banner/board-banner.jpg" alt="Tenders - Tenders Notices" title="Tenders - Tenders Notices"
@@ -91,41 +43,49 @@
             <i class="bi bi-file-earmark-text" title="Tender Notices"></i> Tender Notices
         </h3>
     </div>
+<!-- filter Year -->
+    <div class="filter-card theme-tender mb-4">
+        <!-- <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="filter-icon-wrapper">
+                <i class="bi bi-funnel-fill"></i>
+            </div>
+            <div>
+                <h6 class="filter-card-title mb-0">Search Tenders Archive</h6>
+                <small class="text-muted">Filter archived tenders by financial year or specific date range</small>
+            </div>
+        </div> -->
+        
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label fw-semibold text-secondary small">Financial Year</label>
+                <select class="form-select" id="financial_year">
+                    <option value="">All Years</option>
+                    <?php foreach($available_years as $year_data): ?>
+                        <option value="<?php echo $year_data['year']; ?>">
+                            <?php echo $year_data['year']; ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
 
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <div class="row g-3 align-items-end" style="padding: 10px;">
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Financial Year</label>
-                    <select class="form-select" id="financial_year">
-                        <option value="">All Years</option>
-                        <?php foreach($available_years as $year_data): ?>
-                            <option value="<?php echo $year_data['year']; ?>">
-                                <?php echo $year_data['year']; ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold text-secondary small">Start Date</label>
+                <input type="date" class="form-control" id="start_date">
+            </div>
 
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Start Date</label>
-                    <input type="date" class="form-control" id="start_date">
-                </div>
-
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">End Date</label>
-                    <input type="date" class="form-control" id="end_date">
-                </div>
-                
-                <div class="col-md-12">
-                    <div class="filter-buttons">
-                        <button class="btn btn-primary" id="apply_filters">
-                            <i class="bi bi-search"></i> Apply Filters
-                        </button>
-                        <button class="btn btn-secondary" id="reset_filters">
-                            <i class="bi bi-arrow-repeat"></i> Reset
-                        </button>
-                    </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold text-secondary small">End Date</label>
+                <input type="date" class="form-control" id="end_date">
+            </div>
+            
+            <div class="col-md-3">
+                <div class="filter-buttons">
+                    <button class="btn btn-primary" id="apply_filters">
+                        <i class="bi bi-search"></i> Apply Filters
+                    </button>
+                    <button class="btn btn-secondary" id="reset_filters">
+                        <i class="bi bi-arrow-repeat"></i> Reset
+                    </button>
                 </div>
             </div>
         </div>

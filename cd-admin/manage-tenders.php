@@ -146,7 +146,7 @@ $tenders = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <h4 class="mb-0">
                     <i class="bi bi-file-text-fill"></i> Manage Tenders
                 </h4>
-                <a href="create-tender.php" class="btn btn-primary">
+                <a href="add-tender.php" class="btn btn-primary">
                     <i class="bi bi-plus-circle"></i> Create New Tender
                 </a>
             </div>

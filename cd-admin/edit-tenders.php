@@ -271,7 +271,7 @@ $subcategories = $pdo->query($sql_subcat)->fetchAll(PDO::FETCH_ASSOC);
                             <?php } ?>
                         </div>
                         <div class="col-md-6 preview-container">
-                            <embed src="https://gpsimdega.ac.in/cdgps/src/<?= $tender['tender_notice_path'] ?>" class="preview" width="100%" height="150px" style="border:1px solid #ccc;">
+                            <embed src="<?= $base_url ?>/cd-admin/src/<?= $tender['tender_notice_path'] ?>" class="preview" width="100%" height="150px" style="border:1px solid #ccc;">
                         </div>
                     </div>
                     <div class="row">
@@ -291,7 +291,7 @@ $subcategories = $pdo->query($sql_subcat)->fetchAll(PDO::FETCH_ASSOC);
                         </div>
                         <div class="col-md-6 preview-container">
                             <?php if (!empty($tender['tender_doc_path'])) { ?>
-                                <embed src="https://gpsimdega.ac.in/cdgps/src/<?= $tender['tender_doc_path'] ?>" class="preview" width="100%" height="150px" style="border:1px solid #ccc;">
+                                <embed src="<?= $base_url ?>/cd-admin/src/<?= $tender['tender_doc_path'] ?>" class="preview" width="100%" height="150px" style="border:1px solid #ccc;">
                             <?php } ?>
                         </div>
                     </div>
@@ -323,7 +323,7 @@ $subcategories = $pdo->query($sql_subcat)->fetchAll(PDO::FETCH_ASSOC);
                         </div>
                         <div class="col-md-6 preview-container">
                             <?php if (!empty($tender['tender_other_attach_1_path'])) { ?>
-                                <a class="btn btn-primary my-2" href="https://gpsimdega.ac.in/cdgps/src/<?= $tender['tender_other_attach_1_path'] ?? '' ?>">See File</a>
+                                <a class="btn btn-primary my-2" href="<?= $base_url ?>/cd-admin/src/<?= $tender['tender_other_attach_1_path'] ?? '' ?>">See File</a>
                             <?php } ?>
                         </div> <!-- Preview Column -->
                     </div>
@@ -347,7 +347,7 @@ $subcategories = $pdo->query($sql_subcat)->fetchAll(PDO::FETCH_ASSOC);
                         </div>
                         <div class="col-md-6 preview-container">
                             <?php if (!empty($tender['tender_other_attach_2_path'])) { ?>
-                                <a class="btn btn-primary my-2" href="https://gpsimdega.ac.in/cdgps/src/<?= $tender['tender_other_attach_2_path'] ?? '' ?>">See File</a>
+                                <a class="btn btn-primary my-2" href="<?= $base_url ?>/cd-admin/src/<?= $tender['tender_other_attach_2_path'] ?? '' ?>">See File</a>
                             <?php } ?>
                         </div> <!-- Preview Column -->
                     </div>
@@ -371,7 +371,7 @@ $subcategories = $pdo->query($sql_subcat)->fetchAll(PDO::FETCH_ASSOC);
                         </div>
                         <div class="col-md-6 preview-container">
                             <?php if (!empty($tender['tender_other_attach_3_path'])) { ?>
-                                <a class="btn btn-primary my-2" href="https://gpsimdega.ac.in/cdgps/src/<?= $tender['tender_other_attach_3_path'] ?? '' ?>">See File</a>
+                                <a class="btn btn-primary my-2" href="<?= $base_url ?>/cd-admin/src/<?= $tender['tender_other_attach_3_path'] ?? '' ?>">See File</a>
                             <?php } ?>
 
                         </div> <!-- Preview Column -->

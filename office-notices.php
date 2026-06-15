@@ -31,6 +31,7 @@ define('ADMIN_URL', BASE_URL . '/cd-admin/src');
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $limit = 10;
 $offset = ($page - 1) * $limit;
+$selectedYear = isset($_GET['year']) && !empty($_GET['year']) ? (int)$_GET['year'] : null;
 
 try {
     // Get total count for pagination
@@ -41,7 +42,12 @@ try {
                    AND n.status = 'A'
                    AND csc.child_sub_category_name IN ('Circulars/Office Orders', 'Office Order', 'Circulars')";
     
+    if ($selectedYear) {
+        $countQuery .= " AND YEAR(n.notice_dated) = :year";
+    }
+    
     $countStmt = $pdo->prepare($countQuery);
+    if ($selectedYear) $countStmt->bindParam(':year', $selectedYear, PDO::PARAM_INT);
     $countStmt->execute();
     $totalRecords = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
     $totalPages = ceil($totalRecords / $limit);
@@ -75,11 +81,16 @@ try {
               LEFT JOIN child_sub_category csc ON n.notice_childsubcategory = csc.id
               WHERE n.is_deleted = '0'
               AND n.status = 'A'
-              AND csc.child_sub_category_name IN ('Circulars/Office Orders', 'Office Order', 'Circulars')
-              ORDER BY n.notice_dated DESC, n.id DESC
-              LIMIT :limit OFFSET :offset";
+              AND csc.child_sub_category_name IN ('Circulars/Office Orders', 'Office Order', 'Circulars')";
+
+    if ($selectedYear) {
+        $query .= " AND YEAR(n.notice_dated) = :year";
+    }
+
+    $query .= " ORDER BY n.notice_dated DESC, n.id DESC LIMIT :limit OFFSET :offset";
     
     $stmt = $pdo->prepare($query);
+    if ($selectedYear) $stmt->bindParam(':year', $selectedYear, PDO::PARAM_INT);
     $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
     $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
     $stmt->execute();
@@ -530,21 +541,22 @@ try {
                     <?php if ($totalPages > 1): ?>
                     <div class="pagination">
                         <?php if ($page > 1): ?>
-                            <a href="?page=<?= $page - 1 ?>">&laquo; Previous</a>
+                            <a href="?page=<?= $page - 1 ?><?= $selectedYear ? '&year=' . $selectedYear : '' ?>">&laquo; Previous</a>
                         <?php else: ?>
                             <span class="disabled">&laquo; Previous</span>
                         <?php endif; ?>
                         
                         <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                            <?php $paginationUrl = "?page=$i" . ($selectedYear ? "&year=$selectedYear" : ""); ?>
                             <?php if ($i == $page): ?>
                                 <span class="active"><?= $i ?></span>
                             <?php else: ?>
-                                <a href="?page=<?= $i ?>"><?= $i ?></a>
+                                <a href="<?= $paginationUrl ?>"><?= $i ?></a>
                             <?php endif; ?>
                         <?php endfor; ?>
                         
                         <?php if ($page < $totalPages): ?>
-                            <a href="?page=<?= $page + 1 ?>">Next &raquo;</a>
+                            <a href="?page=<?= $page + 1 ?><?= $selectedYear ? '&year=' . $selectedYear : '' ?>">Next &raquo;</a>
                         <?php else: ?>
                             <span class="disabled">Next &raquo;</span>
                         <?php endif; ?>
@@ -567,9 +579,9 @@ try {
                 <div class="year-filter">
                     <h3 class="sidebar-title">Filter by Year</h3>
                     <div class="year-list">
-                        <a href="office-notice.php" class="year-link <?= !isset($_GET['year']) ? 'active' : '' ?>">All</a>
+                        <a href="office-notices.php" class="year-link <?= !isset($_GET['year']) ? 'active' : '' ?>">All</a>
                         <?php foreach ($availableYears as $year): ?>
-                            <a href="office-notice.php?year=<?= $year ?>" class="year-link"><?= $year ?></a>
+                            <a href="office-notices.php?year=<?= $year ?>" class="year-link <?= (isset($_GET['year']) && $_GET['year'] == $year) ? 'active' : '' ?>"><?= $year ?></a>
                         <?php endforeach; ?>
                     </div>
                 </div>
@@ -674,19 +686,6 @@ document.getElementById('searchInput').addEventListener('input', function() {
         }
     }
 });
-
-// Year filter from URL
-const urlParams = new URLSearchParams(window.location.search);
-const yearParam = urlParams.get('year');
-if (yearParam) {
-    const noticeItems = document.querySelectorAll('.notice-item');
-    noticeItems.forEach(item => {
-        const dateText = item.querySelector('.notice-date')?.innerText || '';
-        if (!dateText.includes(yearParam)) {
-            item.style.display = 'none';
-        }
-    });
-}
 </script>
 </body>
 </html>

@@ -1,3 +1,27 @@
+<?php
+// Fetch ONLY Ticker Notices from database using dynamic category matching
+require_once __DIR__ . '/cd-admin/src/database/Database.php';
+
+$database = new Database();
+$pdo = $database->getConnection();
+
+// Dynamic query - no hardcoded IDs
+$sql = "SELECT n.* 
+        FROM notices n
+        INNER JOIN category_master cm ON cm.id = n.notice_category
+        INNER JOIN sub_category sc ON sc.id = n.notice_subcategory
+        INNER JOIN child_sub_category csc ON csc.id = n.notice_childsubcategory
+        WHERE n.status = 'A' 
+          AND cm.category_name = 'Notice'
+          AND sc.sub_category_name = 'Notice'
+          AND csc.child_sub_category_name = 'Ticker'
+        ORDER BY n.id DESC";
+
+$stmt = $pdo->prepare($sql);
+$stmt->execute();
+$tickerNotices = $stmt->fetchAll(PDO::FETCH_ASSOC);
+?>
+<?php if (!empty($tickerNotices)): ?>
 <div class="notice-bar" role="region" aria-label="Latest News Updates">
     <button id="toggleBtn" aria-pressed="false" aria-controls="noticeTrack" title="Pause or Play News Updates"
         aria-label="Pause or Play scrolling news updates">
@@ -6,26 +30,13 @@
     <div class="notice-wrapper" role="marquee" aria-live="polite">
         <div class="notice-track" id="noticeTrack">
             <ul>
-                <li tabindex="0" role="listitem"
-                    title="TVNL empowering Jharkhand through efficient, sustainable thermal power generation">
-                    Tenughat Vidyut Nigam Limited (TVNL) — Empowering Jharkhand through efficient, sustainable thermal
-                    power generation.
-                </li>
-                <li tabindex="0" role="listitem"
-                    title="TVNL ensures continuous electricity supply with focus on environmental sustainability">
-                    TVNL ensures continuous electricity supply with a focus on environmental sustainability.
-                </li>
-                <li tabindex="0" role="listitem" title="Join TVNL in advancing the energy future of Jharkhand">
-                    Join us in advancing the energy future of Jharkhand with innovation and responsibility.
-                </li>
-                <li tabindex="0" role="listitem"
-                    title="TVNL committed to operational excellence and reliable energy delivery">
-                    We are committed to operational excellence and reliable energy delivery.
-                </li>
-                <li tabindex="0" role="listitem" title="TVNL powering progress and fueling growth">
-                    TVNL — Powering progress, fueling growth.
-                </li>
+                <?php foreach ($tickerNotices as $notice): ?>
+                    <li tabindex="0" role="listitem" title="<?= htmlspecialchars($notice['notice'] ?? '') ?>">
+                        <?= htmlspecialchars($notice['notice_title'] ?? '') ?>
+                    </li>
+                <?php endforeach ?>
             </ul>
         </div>
     </div>
 </div>
+<?php endif; ?>

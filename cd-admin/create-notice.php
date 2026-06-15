@@ -167,7 +167,7 @@ $noticeCategories = $noticeCategoryStmt->fetchAll(PDO::FETCH_ASSOC);
                                     class="text-danger">*</span></label>
                             <textarea class="form-control" class="form-control" id="noticeTitle" name="noticeTitle"
                                 placeholder="Title Max 255 characters" maxlength="255"
-                                required>  <?= $_SESSION['post']['noticeTitle'] ?? ''; ?> </textarea>
+                                required><?= $_SESSION['post']['noticeTitle'] ?? ''; ?></textarea>
 
                             <?php if (isset($_SESSION['req_error_msg']['noticeTitle'])) { ?>
                                 <div class="form-text text-danger"><?php echo $_SESSION['req_error_msg']['Notice_title']; ?>

@@ -4,12 +4,12 @@
     $database = new Database();
     $conn = $database->getConnection();
 
-    // Get distinct years for filter from cancellation table
+    // Get distinct years for filter from extension table
     $available_years = [];
     try {
-        $query = "SELECT DISTINCT YEAR(can_date_pub) as year 
-                FROM tbl_cancellation_notice 
-                WHERE can_date_pub IS NOT NULL 
+        $query = "SELECT DISTINCT YEAR(pub_date) as year 
+                FROM tbl_tender_ext_details 
+                WHERE pub_date IS NOT NULL 
                 ORDER BY year DESC";
         $stmt = $conn->prepare($query);
         $stmt->execute();
@@ -18,14 +18,128 @@
         $available_years = [];
     }
 ?>
-<link rel="stylesheet" href="assets/css/tenders.css">
+<style>
+    .page-title { border-left: 5px solid #0d6efd; padding-left: 15px; }
+    .table thead th { white-space: nowrap; }
+    .badge { font-size: 0.85rem; }
+    .btn-sm { min-width: 110px; }
+    
+    /* Title + Button row alignment */
+    .title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    .title-row h3 {
+        margin-bottom: 0;
+    }
+    .archive-btn {
+        white-space: nowrap;
+        background-color: #6c757d;
+        color: white;
+        border: none;
+        transition: all 0.2s ease;
+    }
+    .archive-btn:hover {
+        background-color: #5a6268;
+        color: white;
+        transform: translateY(-1px);
+    }
+    
+    .loading-spinner { text-align: center; padding: 50px; }
+    .loading-spinner i {
+        font-size: 3rem;
+        color: #0d6efd;
+        margin-bottom: 15px;
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .no-tenders {
+        text-align: center;
+        padding: 50px;
+    }
+    .no-tenders i {
+        font-size: 3rem;
+        color: #999;
+        margin-bottom: 15px;
+    }
+    .tender-row {
+        transition: background-color 0.3s;
+    }
+    .tender-row:hover {
+        background-color: #f8f9fa;
+    }
+    .filter-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 15px;
+    }
+    @media (min-width: 768px) {
+        .filter-buttons {
+            margin-top: 32px;
+        }
+    }
+    @media (max-width: 576px) {
+        .title-row {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .archive-btn {
+            width: 100%;
+            text-align: center;
+        }
+    }
+    
+    /* Extension specific badge */
+    .badge-extension {
+        background-color: #fd7e14;
+        font-size: 0.7rem;
+        margin-left: 8px;
+        vertical-align: middle;
+    }
+    
+    .ext-date-old {
+        text-decoration: line-through;
+        opacity: 0.6;
+        font-size: 0.8rem;
+        margin-right: 5px;
+    }
+    
+    .ext-date-new {
+        font-weight: bold;
+    }
+    
+    .debug-info {
+        font-size: 11px;
+        color: #666;
+        margin-top: 5px;
+        word-break: break-all;
+    }
+    
+    .error-message {
+        text-align: center;
+        padding: 50px;
+        color: #dc3545;
+    }
+    .error-message i {
+        font-size: 3rem;
+        margin-bottom: 15px;
+    }
+</style>
 
 <section class="tvnl-banner">
-    <img src="assets/images/banner/board-banner.jpg" alt="Cancellation - Tenders Notices" title="Cancellation - Tenders Notices"
+    <img src="assets/images/banner/board-banner.jpg" alt="Extension Tenders - Tenders Notices" title="Extension Tenders - Tenders Notices"
         class="banner-img img-fluid">
     <div class="banner-overlay">
         <div class="container text-center">
-            <h2 class="banner-title">Cancellation Notices</h2>
+            <h2 class="banner-title">Extension Tender Notices</h2>
         </div>
     </div>
 </section>
@@ -35,20 +149,23 @@
     <!-- Title & Archive Button Row (Button right side) -->
     <div class="mb-4 page-title title-row">
         <h3 class="fw-bold text-primary mb-0">
-            <i class="bi bi-x-octagon" title="Cancellation Notices"></i> Cancellation Notices
-            <span class="cancellation-count" id="cancellationCount">0</span>
+            <i class="bi bi-calendar-plus" title="Extension Tender Notices"></i> Extension Tender Notices
         </h3>
-        
+        <div>
+            <a href="tender-notices.php" class="btn archive-btn">
+                <i class="bi bi-archive"></i> Archive Tender Notices
+            </a>
+        </div>
     </div>
 
-    <div class="filter-card theme-cancellation mb-4">
+    <div class="filter-card theme-extension mb-4">
         <div class="d-flex align-items-center gap-3 mb-3">
             <div class="filter-icon-wrapper">
                 <i class="bi bi-funnel-fill"></i>
             </div>
             <div>
-                <h6 class="filter-card-title mb-0">Search Cancellations Archive</h6>
-                <small class="text-muted">Filter archived cancellation notices by financial year or specific date range</small>
+                <h6 class="filter-card-title mb-0">Search Extensions Archive</h6>
+                <small class="text-muted">Filter archived extension notices by financial year or specific date range</small>
             </div>
         </div>
         
@@ -90,10 +207,10 @@
 
     <div class="card shadow-sm">
         <div class="card-body table-responsive">
-            <div id="cancellationContainer">
+            <div id="extensionsContainer">
                 <div class="loading-spinner">
                     <i class="bi bi-arrow-repeat"></i>
-                    <p>Loading cancellation notices...</p>
+                    <p>Loading extension tenders...</p>
                 </div>
             </div>
         </div>
@@ -102,19 +219,35 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-
+// Base URLs for different document types
 const BASE_URL = 'https://tvnl.in';
+const EXTENSION_DOC_PATH = '/master_login/dashboard/upload_doc_ext/';
+const TENDER_DOC_PATH = '/master_login/dashboard/upload_document/';
 
-function buildAttachmentUrl(fileName) {
+// Function to build URL for extension notices
+function buildExtensionUrl(fileName) {
     if (!fileName || fileName === '') {
         return '';
     }
-
+    
     if (fileName.startsWith('http://') || fileName.startsWith('https://')) {
         return fileName;
     }
+    
+    return BASE_URL + EXTENSION_DOC_PATH + fileName;
+}
 
-    return BASE_URL + '/master_login/dashboard/upload_doc_cancellation/' + fileName;
+// Function to build URL for tender documents
+function buildTenderDocumentUrl(fileName) {
+    if (!fileName || fileName === '') {
+        return '';
+    }
+    
+    if (fileName.startsWith('http://') || fileName.startsWith('https://')) {
+        return fileName;
+    }
+    
+    return BASE_URL + TENDER_DOC_PATH + fileName;
 }
 
 let currentFilters = {
@@ -123,7 +256,7 @@ let currentFilters = {
     end_date: ''
 };
 
-function fetchCancellation(page = 1) {
+function fetchExtensions(page = 1) {
     let financial_year = $('#financial_year').val();
     let start_date = $('#start_date').val();
     let end_date = $('#end_date').val();
@@ -134,15 +267,15 @@ function fetchCancellation(page = 1) {
         end_date: end_date
     };
     
-    $('#cancellationContainer').html(`
+    $('#extensionsContainer').html(`
         <div class="loading-spinner">
             <i class="bi bi-arrow-repeat"></i>
-            <p>Loading cancellation notices...</p>
+            <p>Loading extension tenders...</p>
         </div>
     `);
     
     $.ajax({
-        url: 'ajax_call/fetch_cancellation.php',
+        url: 'ajax_call/fetch_tender_extensions.php',
         type: 'POST',
         data: {
             financial_year: financial_year,
@@ -154,79 +287,103 @@ function fetchCancellation(page = 1) {
         success: function(response) {
             console.log('Response:', response);
             
-            $('#cancellationContainer').empty();
+            $('#extensionsContainer').empty();
             
-            if (response.total_records !== undefined) {
-                $('#cancellationCount').text(response.total_records);
-            }
-            
-            if (response.success && response.cancellations && response.cancellations.length > 0) {
+            if (response.success && response.extensions && response.extensions.length > 0) {
                 let tableHtml = `
                     <table class="table table-hover align-middle">
                         <thead class="table-light">
                             <tr>
                                 <th>Sl No</th>
-                                <th>Tender Description</th>
-                                <th class="text-center">Cancellation Date</th>
-                                <th class="text-center">Cancellation Notice</th>
+                                <th>Description</th>
+                                <th class="text-center">Original Last Date<br>of Bid Submission</th>
+                                <th class="text-center">Extended Last Date<br>of Bid Submission</th>
+                                <th class="text-center">Publishing Date</th>
+                                <th class="text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                 `;
                 
-                $.each(response.cancellations, function(index, cancellation) {
+                $.each(response.extensions, function(index, extension) {
                     let serialNumber = response.offset + index + 1;
                     
-                    // Format cancellation date
-                    let cancelDateFormatted = 'Not Available';
-                    if (cancellation.can_date_pub && cancellation.can_date_pub !== '0000-00-00 00:00:00') {
-                        let cancelDate = new Date(cancellation.can_date_pub);
-                        if (!isNaN(cancelDate.getTime())) {
-                            cancelDateFormatted = formatDate(cancelDate);
-                        }
-                    }
+                    // Format dates
+                    let originalEndDate = extension.original_end_date ? new Date(extension.original_end_date) : null;
+                    let originalEndDateFormatted = originalEndDate ? formatDate(originalEndDate) : 'Not Available';
                     
-                    // Get description
-                    let description = cancellation.descp || 'No description available';
+                    let extendedEndDate = extension.extended_end_date ? new Date(extension.extended_end_date) : null;
+                    let extendedEndDateFormatted = extendedEndDate ? formatDate(extendedEndDate) : 'Not Available';
+                    
+                    let publishingDate = extension.pub_date ? new Date(extension.pub_date) : null;
+                    let publishingDateFormatted = publishingDate ? formatDate(publishingDate) : 'Not Available';
+                    
+                    // Truncate description
+                    let description = extension.descp || 'No description available';
                     if (description.length > 150) {
                         description = description.substring(0, 150) + '...';
                     }
                     
-                    let title = cancellation.title || 'Tender Notice';
-                    let tenderNit = cancellation.nit_no || 'N/A';
+                    let title = extension.title || 'Tender Notice';
+                    let tenderNit = extension.nit_no || 'N/A';
                     
-                    // Build the correct URL for cancellation notice
-                    let cancellationUrl = cancellation.cancell_url || '';
-                    let fullCancellationUrl = buildAttachmentUrl(cancellationUrl);
+                    // Build URLs using the correct functions
+                    let extensionDocUrl = buildExtensionUrl(extension.ext_doc_url);
+                    let tenderDocumentUrl = buildTenderDocumentUrl(extension.document_url);
                     
                     tableHtml += `
-                        <tr class="cancellation-row">
+                        <tr class="tender-row">
                             <td>${serialNumber}</td>
                             <td>
                                 <h6 class="fw-semibold text-primary mb-1">
                                     ${escapeHtml(title)}
-                                    <span class="badge badge-cancellation">Cancelled</span>
+                                    <span class="badge badge-extension">Extended</span>
                                 </h6>
                                 <p class="small text-muted mb-1">${escapeHtml(description)}</p>
                                 <span class="badge bg-info">${escapeHtml(tenderNit)}</span>
+                                <div class="debug-info">
+                                    <small>Ext File: ${escapeHtml(extension.ext_doc_url || 'No file')}</small><br>
+                                    <small>Tender File: ${escapeHtml(extension.document_url || 'No file')}</small>
+                                </div>
                             </div>
                             <td class="text-center">
-                                <span class="badge bg-danger">${cancelDateFormatted}</span>
+                                <span class="badge bg-secondary ext-date-old">${originalEndDateFormatted}</span>
+                            </div>
+                            <td class="text-center">
+                                <span class="badge bg-danger ext-date-new">${extendedEndDateFormatted}</span>
+                            </div>
+                            <td class="text-center">
+                                <span class="badge bg-success">${publishingDateFormatted}</span>
                             </div>
                             <td class="text-center">
                     `;
                     
-                    if (fullCancellationUrl && fullCancellationUrl !== '') {
-                        tableHtml += `<a href="${escapeHtml(fullCancellationUrl)}" target="_blank" class="btn btn-outline-danger btn-sm">
-                                        <i class="bi bi-file-pdf"></i> View Cancellation Notice
+                    // Extension Notice Button
+                    if (extensionDocUrl && extensionDocUrl !== '') {
+                        tableHtml += `<a href="${escapeHtml(extensionDocUrl)}" target="_blank" class="btn btn-outline-warning btn-sm mb-1">
+                                        <i class="bi bi-calendar-plus"></i> Extension Notice
+                                      </a><br>`;
+                    } else {
+                        tableHtml += `<button class="btn btn-outline-warning btn-sm mb-1" disabled>
+                                        <i class="bi bi-calendar-plus"></i> Extension Notice
+                                      </button><br>`;
+                    }
+                    
+                    // Tender Document Button
+                    if (tenderDocumentUrl && tenderDocumentUrl !== '') {
+                        tableHtml += `<a href="${escapeHtml(tenderDocumentUrl)}" target="_blank" class="btn btn-outline-success btn-sm mb-1">
+                                        <i class="bi bi-download"></i> Tender Document
                                       </a>`;
                     } else {
-                        tableHtml += `<button class="btn btn-outline-secondary btn-sm" disabled>
-                                        <i class="bi bi-file-pdf"></i> Not Available
+                        tableHtml += `<button class="btn btn-outline-success btn-sm mb-1" disabled>
+                                        <i class="bi bi-download"></i> Tender Document
                                       </button>`;
                     }
                     
-                    tableHtml += `</div></tr>`;
+                    tableHtml += `
+                            </div>
+                        </tr>
+                    `;
                 });
                 
                 tableHtml += `
@@ -238,13 +395,13 @@ function fetchCancellation(page = 1) {
                     tableHtml += generatePagination(response.current_page, response.total_pages, response.total_records, response.results_per_page, response.offset);
                 }
                 
-                $('#cancellationContainer').html(tableHtml);
+                $('#extensionsContainer').html(tableHtml);
             } else {
-                let errorMsg = response.message || 'No cancellation notices found in the database.';
-                $('#cancellationContainer').html(`
+                let errorMsg = response.message || 'No extension tenders found in the database.';
+                $('#extensionsContainer').html(`
                     <div class="no-tenders">
                         <i class="bi bi-inbox"></i>
-                        <h4 style="color: #666; margin-bottom: 10px;">No Cancellation Notices Found</h4>
+                        <h4 style="color: #666; margin-bottom: 10px;">No Extension Tenders Found</h4>
                         <p style="color: #999;">${escapeHtml(errorMsg)}</p>
                     </div>
                 `);
@@ -260,12 +417,12 @@ function fetchCancellation(page = 1) {
                 errorDetail = xhr.responseText ? xhr.responseText.substring(0, 200) : 'Unknown error';
             }
             
-            $('#cancellationContainer').html(`
+            $('#extensionsContainer').html(`
                 <div class="error-message">
                     <i class="bi bi-exclamation-triangle-fill"></i>
-                    <h4 style="color: #dc3545;">Error Loading Cancellation Notices</h4>
+                    <h4 style="color: #dc3545;">Error Loading Extension Tenders</h4>
                     <p style="color: #666;">${escapeHtml(errorDetail)}</p>
-                    <button class="btn btn-primary mt-3" onclick="fetchCancellation(1)">Try Again</button>
+                    <button class="btn btn-primary mt-3" onclick="fetchExtensions(1)">Try Again</button>
                 </div>
             `);
         }
@@ -346,28 +503,28 @@ function escapeHtml(text) {
 }
 
 $(document).ready(function() {
-    fetchCancellation(1);
+    fetchExtensions(1);
     
     $('#financial_year').change(function() {
-        fetchCancellation(1);
+        fetchExtensions(1);
     });
     
     $('#apply_filters').click(function() {
-        fetchCancellation(1);
+        fetchExtensions(1);
     });
     
     $('#reset_filters').click(function() {
         $('#financial_year').val('');
         $('#start_date').val('');
         $('#end_date').val('');
-        fetchCancellation(1);
+        fetchExtensions(1);
     });
     
     $(document).on('click', '.pagination .page-link', function(e) {
         e.preventDefault();
         let page = $(this).data('page');
         if (page && !$(this).parent().hasClass('disabled')) {
-            fetchCancellation(page);
+            fetchExtensions(page);
         }
     });
 });

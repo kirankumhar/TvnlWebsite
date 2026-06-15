@@ -5,9 +5,6 @@ class Database {
     private $dbname = 'tvnl_website_db';
     private $username = 'root';
     private $password = '';
-
-   // private $username = 'root';
-   // private $password = '';
 	
     private $pdo;
 
